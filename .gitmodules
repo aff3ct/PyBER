@@ -1,3 +1,7 @@
 [submodule "lib/pyqtgraph"]
 	path = lib/pyqtgraph
 	url = https://github.com/pyqtgraph/pyqtgraph.git
+[submodule "data/refs"]
+	path = data/refs
+	url = ../error_rate_references
+	branch = master
