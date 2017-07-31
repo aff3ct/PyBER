@@ -8,6 +8,6 @@ Name=PyBER Plotter
 # the data to browse in PyBER (if nothing is specified, PyBER will try to open the 
 # "data/" folder).
 Exec=[full_path_to_PyBER]/pyBER.py [full_path_to_PyBER]/data/
-Icon=[full_path_to_PyBER]/woody.png
+Icon=[full_path_to_PyBER]/img/woody.png
 Type=Application
 Categories=Development;

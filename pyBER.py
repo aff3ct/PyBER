@@ -39,7 +39,7 @@ area = DockArea()
 win.setCentralWidget(area)
 win.resize(1280,800)
 win.setWindowTitle('PyBER plotter')
-win.setWindowIcon(QtGui.QIcon('woody_ico.png'))
+win.setWindowIcon(QtGui.QIcon('img/woody_ico.png'))
 
 # Create docks, place them into the window one at a time.
 # Note that size arguments are only a suggestion; docks will still have to
