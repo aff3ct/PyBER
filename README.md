@@ -1,4 +1,4 @@
-#PyBER plotter
+# PyBER plotter
 
 ![](img/PyBER_screenshot.png)
 
