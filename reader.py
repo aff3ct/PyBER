@@ -107,6 +107,11 @@ def dataReader(filename, EsEb):
 			elif len(line) > 7 and line[0] == '#' and line[5] == '*' and line[6] == '*':
 				entry = line.replace("#    ** ", "").replace("\n", "").split(" = ")
 				dataDeta.append(entry)
+			elif len(line) > 6 and line[0] == '#' and line[1] == ' ' and line[2] == ' ' and line[3] == ' ' and line[4] == ' ' and line[5] != ' ' and line[5] != '*':
+				entry = line.replace("#    ", "*").replace("\n", "").split(" = ")
+				if len(entry) == 1:
+					entry[0] = entry[0].replace("-", "")
+				dataDeta.append(entry)
 		else:
 			snr = getVal(line, 0, EsEb)
 			if snr == -999.0:

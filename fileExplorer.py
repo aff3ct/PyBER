@@ -250,13 +250,18 @@ class AdvTreeView(QtGui.QTreeView):
 					else:
 						layoutLegend.addRow("<b>" + entry[0] + "</b>: ", QtGui.QLabel(entry[1]))
 				elif len(entry) == 1:
-					if not firstTitle:
-						line = QtGui.QFrame()
-						line.setFrameShape(QtGui.QFrame.HLine)
-						line.setFrameShadow(QtGui.QFrame.Sunken)
-						layoutLegend.addRow(line)
-					firstTitle = False
-					layoutLegend.addRow("<h3><u>" + entry[0] + "<u></h3>", QtGui.QLabel(""))
+					if len(entry[0]) >= 1 and entry[0][0] == '*':
+						e = entry[0].replace("*", "")
+						layoutLegend.addRow("<b><u>" + e + ":<u></b>", QtGui.QLabel(""))
+					else:
+						if not firstTitle:
+							line = QtGui.QFrame()
+							line.setFrameShape(QtGui.QFrame.HLine)
+							line.setFrameShadow(QtGui.QFrame.Sunken)
+							layoutLegend.addRow(line)
+						firstTitle = False
+						layoutLegend.addRow("<h3><u>" + entry[0] + "<u></h3>", QtGui.QLabel(""))
+
 			wCur = QtGui.QWidget();
 			wCur.setLayout(layoutLegend)
 
