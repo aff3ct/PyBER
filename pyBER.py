@@ -109,6 +109,10 @@ switchEbEsAction.setShortcut('Ctrl+E')
 switchEbEsAction.setStatusTip('Switch between Es/N0 and Eb/N0')
 switchEbEsAction.triggered.connect(lambda: wFile.switchEsEb())
 
+switchFileFilterAction = QtGui.QAction('&Activate/Deactivate File Filter', win)
+switchFileFilterAction.setStatusTip('Activate or Deactivate the File Filter (*.perf, *.dat, *.txt, *.data)')
+switchFileFilterAction.triggered.connect(lambda: wFile.switchFileFilter())
+
 refreshAction = QtGui.QAction('&Refresh', win)
 refreshAction.setShortcut('F5')
 refreshAction.setStatusTip('Refresh the displayed curves')
@@ -122,6 +126,7 @@ fileMenu.addAction(exitAction)
 optionMenu = menubar.addMenu('&Display')
 optionMenu.addAction(refreshAction)
 optionMenu.addAction(switchEbEsAction)
+optionMenu.addAction(switchFileFilterAction)
 
 # -----------------------------------------------------------------------------
 

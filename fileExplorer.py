@@ -104,6 +104,9 @@ class AdvTreeView(QtGui.QTreeView):
 		self.updateCurves()
 		self.updateDetails()
 
+	def switchFileFilter(self):
+		self.model().setNameFilterDisables(not self.model().nameFilterDisables())
+
 	def openFileOrDir(self, *args):
 		paths = [ self.model().filePath(index) for index in args ]
 		if len(paths):
@@ -322,7 +325,7 @@ class AdvTreeView(QtGui.QTreeView):
 			if len(self.dataSNR[pathId]) > 0:
 				self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
 			else:
-				self.lastSNR[pathId] = -999.0 
+				self.lastSNR[pathId] = -999.0
 
 		self.updateCurves()
 		self.updateDetails()
