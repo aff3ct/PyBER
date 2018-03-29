@@ -42,7 +42,7 @@ class AdvTreeView(QtGui.QTreeView):
 	lBEFE = []
 	lThr  = []
 
-	EsEb = []
+	EsEbMI = []
 
 	dataSNR  = []
 	dataBER  = []
@@ -74,7 +74,7 @@ class AdvTreeView(QtGui.QTreeView):
 		self.lBEFE = self.wBEFE.addLegend()
 		self.lThr  = self.wThr .addLegend()
 
-		self.EsEb = "Eb"
+		self.EsEbMI = "Eb"
 
 		self.hideLegend()
 
@@ -82,16 +82,24 @@ class AdvTreeView(QtGui.QTreeView):
 		self.fsWatcher = QtCore.QFileSystemWatcher()
 		self.fsWatcher.fileChanged.connect(self.updateDataAndCurve)
 
-	def switchEsEb(self):
-		if self.EsEb == "Eb":
-			self.EsEb = "Es"
+	def switchEsEbMI(self):
+		if self.EsEbMI == "Eb":
+			self.EsEbMI = "Es"
+		elif self.EsEbMI == "Es":
+			self.EsEbMI = "MI"
 		else:
-			self.EsEb = "Eb"
+			self.EsEbMI = "Eb"
 
-		self.wBER .setLabel('bottom', self.EsEb + "/N0 (dB)")
-		self.wFER .setLabel('bottom', self.EsEb + "/N0 (dB)")
-		self.wBEFE.setLabel('bottom', self.EsEb + "/N0 (dB)")
-		self.wThr .setLabel('bottom', self.EsEb + "/N0 (dB)")
+		if self.EsEbMI == "MI":
+			self.wBER .setLabel('bottom', "Mutual Info")
+			self.wFER .setLabel('bottom', "Mutual Info")
+			self.wBEFE.setLabel('bottom', "Mutual Info")
+			self.wThr .setLabel('bottom', "Mutual Info")
+		else:
+			self.wBER .setLabel('bottom', self.EsEbMI + "/N0 (dB)")
+			self.wFER .setLabel('bottom', self.EsEbMI + "/N0 (dB)")
+			self.wBEFE.setLabel('bottom', self.EsEbMI + "/N0 (dB)")
+			self.wThr .setLabel('bottom', self.EsEbMI + "/N0 (dB)")
 
 		self.refresh()
 
@@ -158,7 +166,7 @@ class AdvTreeView(QtGui.QTreeView):
 			pathId = self.getPathId(path)
 
 			dataName = []
-			self.dataSNR[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.EsEb)
+			self.dataSNR[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.EsEbMI)
 
 			if not self.dataName[pathId]:
 				if not dataName:

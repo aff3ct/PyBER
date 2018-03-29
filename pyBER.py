@@ -104,10 +104,10 @@ exitAction.setShortcut('Ctrl+Q')
 exitAction.setStatusTip('Exit application')
 exitAction.triggered.connect(lambda: sys.exit(0))
 
-switchEbEsAction = QtGui.QAction('&Switch Es/Eb', win)
-switchEbEsAction.setShortcut('Ctrl+E')
-switchEbEsAction.setStatusTip('Switch between Es/N0 and Eb/N0')
-switchEbEsAction.triggered.connect(lambda: wFile.switchEsEb())
+switchEbEsMIAction = QtGui.QAction('&Switch Es/Eb/MI', win)
+switchEbEsMIAction.setShortcut('Ctrl+E')
+switchEbEsMIAction.setStatusTip('Switch between Es/N0, Eb/N0 and MI')
+switchEbEsMIAction.triggered.connect(lambda: wFile.switchEsEbMI())
 
 switchFileFilterAction = QtGui.QAction('&Activate/Deactivate File Filter', win)
 switchFileFilterAction.setStatusTip('Activate or Deactivate the File Filter (*.perf, *.dat, *.txt, *.data)')
@@ -125,7 +125,7 @@ fileMenu = menubar.addMenu('&File')
 fileMenu.addAction(exitAction)
 optionMenu = menubar.addMenu('&Display')
 optionMenu.addAction(refreshAction)
-optionMenu.addAction(switchEbEsAction)
+optionMenu.addAction(switchEbEsMIAction)
 optionMenu.addAction(switchFileFilterAction)
 
 # -----------------------------------------------------------------------------

@@ -22,19 +22,23 @@
 
 import os
 
-def getVal(line, idColumn, EsEb):
+def getVal(line, idColumn, EsEbMI):
 	# there are two different file formats, classic (lines begni with SNR) and new (lines begin with SNR value directly)
 	# indices of the different parameter change, and the following array is used to convert classic indices to new
 	convert_to_v1 = [0, 4, 5, 12, 0, 3, 2]
 	convert_to_v2 = [0, 4, 5, 9 , 0, 3, 2]
 	convert_to_v3 = [0, 4, 5, 6 , 0, 3, 2]
 
-	if (EsEb == "Es"):
+	if (EsEbMI == "Es"):
 		convert_to_v4 = [0, 5, 6, 10, 1, 4, 3]
 		convert_to_v5 = [0, 5, 6, 7 , 1, 4, 3]
-	else:
+		convert_to_v6 = [0, 6, 7, 8 , 1, 5, 4] # with MI
+	elif (EsEbMI == "Eb"):
 		convert_to_v4 = [1, 5, 6, 10, 1, 4, 3]
 		convert_to_v5 = [1, 5, 6, 7 , 1, 4, 3]
+		convert_to_v6 = [1, 6, 7, 8 , 1, 5, 4] # with MI
+	else: #(EsEbMI == "MI")
+		convert_to_v6 = [2, 6, 7, 8 , 1, 5, 4] # with MI
 
 	# classic
 	if line.startswith("SNR = "):
@@ -75,13 +79,15 @@ def getVal(line, idColumn, EsEb):
 			val = float(line[convert_to_v4[idColumn]])
 		elif(len(line) == 9):
 			val = float(line[convert_to_v5[idColumn]])
+		elif(len(line) == 10):
+			val = float(line[convert_to_v6[idColumn]])
 
 	if "inf" in str(val):
 		val = float(0.0)
 
 	return val
 
-def dataReader(filename, EsEb):
+def dataReader(filename, EsEbMI):
 	# read all the lines from the current file
 	aFile = open(filename, "r")
 	lines = []
@@ -113,17 +119,17 @@ def dataReader(filename, EsEb):
 					entry[0] = entry[0].replace("-", "")
 				dataDeta.append(entry)
 		else:
-			snr = getVal(line, 0, EsEb)
+			snr = getVal(line, 0, EsEbMI)
 			if snr == -999.0:
 				continue # line is ignored
 
 			dataSNR.append(snr)
-			dataBER.append(getVal(line, 1, EsEb))
-			dataFER.append(getVal(line, 2, EsEb))
-			dataThr.append(getVal(line, 3, EsEb))
+			dataBER.append(getVal(line, 1, EsEbMI))
+			dataFER.append(getVal(line, 2, EsEbMI))
+			dataThr.append(getVal(line, 3, EsEbMI))
 
-			be = getVal(line, 6, EsEb)
-			fe = getVal(line, 5, EsEb)
+			be = getVal(line, 6, EsEbMI)
+			fe = getVal(line, 5, EsEbMI)
 
 			if fe == 0:
 				dataBEFE.append(0.0)
