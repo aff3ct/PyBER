@@ -42,15 +42,15 @@ class AdvTreeView(QtGui.QTreeView):
 	lBEFE = []
 	lThr  = []
 
-	EsEbMI = []
+	NoiseType = []
 
-	dataSNR  = []
-	dataBER  = []
-	dataFER  = []
-	dataBEFE = []
-	dataThr  = []
-	dataDeta = []
-	dataName = []
+	dataNoise  = []
+	dataBER    = []
+	dataFER    = []
+	dataBEFE   = []
+	dataThr    = []
+	dataDeta   = []
+	dataName   = []
 
 	#               1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
 	colors       = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
@@ -74,7 +74,7 @@ class AdvTreeView(QtGui.QTreeView):
 		self.lBEFE = self.wBEFE.addLegend()
 		self.lThr  = self.wThr .addLegend()
 
-		self.EsEbMI = "Eb"
+		self.NoiseType = "Eb/N0"
 
 		self.hideLegend()
 
@@ -82,32 +82,48 @@ class AdvTreeView(QtGui.QTreeView):
 		self.fsWatcher = QtCore.QFileSystemWatcher()
 		self.fsWatcher.fileChanged.connect(self.updateDataAndCurve)
 
-	def switchEsEbMI(self):
-		if self.EsEbMI == "Eb":
-			self.EsEbMI = "Es"
-		elif self.EsEbMI == "Es":
-			self.EsEbMI = "MI"
+	def switchNoiseType(self):
+		if self.NoiseType == "Eb/N0":
+			self.NoiseType = "Es/N0"
+		elif self.NoiseType == "Es/N0":
+			self.NoiseType = "MI"
 		else:
-			self.EsEbMI = "Eb"
+			self.NoiseType = "Eb/N0"
 
-		if self.EsEbMI == "MI":
-			self.wBER .setLabel('bottom', "Mutual Info")
-			self.wFER .setLabel('bottom', "Mutual Info")
-			self.wBEFE.setLabel('bottom', "Mutual Info")
-			self.wThr .setLabel('bottom', "Mutual Info")
+		if self.NoiseType == "MI":
+			self.setLabel("Mutual Info")
 		else:
-			self.wBER .setLabel('bottom', self.EsEbMI + "/N0 (dB)")
-			self.wFER .setLabel('bottom', self.EsEbMI + "/N0 (dB)")
-			self.wBEFE.setLabel('bottom', self.EsEbMI + "/N0 (dB)")
-			self.wThr .setLabel('bottom', self.EsEbMI + "/N0 (dB)")
+			self.setLabel(self.NoiseType + " (dB)")
 
 		self.refresh()
 
+	def setLabel(newLabel):
+		self.wBER .setLabel('bottom', newLabel)
+		self.wFER .setLabel('bottom', newLabel)
+		self.wBEFE.setLabel('bottom', newLabel)
+		self.wThr .setLabel('bottom', newLabel)
+
 	def refresh(self):
-		for path in self.paths:
-			self.updateData(path)
+		self.dataNoise = [0 for x in range(len(self.paths))]
+		self.dataBER   = [0 for x in range(len(self.paths))]
+		self.dataFER   = [0 for x in range(len(self.paths))]
+		self.dataBEFE  = [0 for x in range(len(self.paths))]
+		self.dataThr   = [0 for x in range(len(self.paths))]
+		self.dataDeta  = [0 for x in range(len(self.paths))]
+		self.lastSNR   = [0 for x in range(len(self.paths))]
+
 		for name in self.dataName:
 			self.removeLegendItem(name)
+		self.dataName = [0 for x in range(len(self.paths))]
+
+		for path in self.paths:
+			self.updateData(path)
+
+		for pathId in range(len(self.paths)):
+			if len(self.dataNoise[pathId]) > 0:
+				self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
+			else:
+				self.lastSNR[pathId] = -999.0
 
 		self.updateCurves()
 		self.updateDetails()
@@ -165,58 +181,61 @@ class AdvTreeView(QtGui.QTreeView):
 		if path in self.paths:
 			pathId = self.getPathId(path)
 
+			self.dataName[pathId] = []
 			dataName = []
-			self.dataSNR[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.EsEbMI)
+			self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType)
 
-			if not self.dataName[pathId]:
-				if not dataName:
-					self.dataName[pathId] = "Curve " + str(pathId)
-				elif dataName in self.dataName:
-					self.dataName[pathId] = dataName + "_" + str(pathId)
-				else:
-					self.dataName[pathId] = dataName
+			if not dataName:
+				self.dataName[pathId] = "Curve " + str(pathId)
+			elif dataName in self.dataName:
+				self.dataName[pathId] = dataName + "_" + str(pathId)
+			else:
+				self.dataName[pathId] = dataName
 
-	def plotCurve(self, pathId, dataSNR, dataBER, dataFER, dataBEFE, dataThr):
+			if len(self.dataNoise[pathId]) == 0:
+				self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
+
+	def plotCurve(self, pathId, dataNoise, dataBER, dataFER, dataBEFE, dataThr):
 		icolor = self.colors[pathId % len(self.colors)]
 		pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
 		pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
 
 		self.removeLegendItem(self.dataName[pathId])
 
-		self.wBER. plot(x=dataSNR, y=dataBER,  pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wFER. plot(x=dataSNR, y=dataFER,  pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wBEFE.plot(x=dataSNR, y=dataBEFE, pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wThr. plot(x=dataSNR, y=dataThr,  pen=pen, symbol='x', name=self.dataName[pathId])
+		self.wBER. plot(x=dataNoise, y=dataBER,  pen=pen, symbol='x', name=self.dataName[pathId])
+		self.wFER. plot(x=dataNoise, y=dataFER,  pen=pen, symbol='x', name=self.dataName[pathId])
+		self.wBEFE.plot(x=dataNoise, y=dataBEFE, pen=pen, symbol='x', name=self.dataName[pathId])
+		self.wThr. plot(x=dataNoise, y=dataThr,  pen=pen, symbol='x', name=self.dataName[pathId])
 
 	def updateCurve(self, path):
 		if path in self.paths:
 			pathId = self.getPathId(path)
 
-			if self.dataSNR[pathId]:
-				if self.dataSNR[pathId][len(self.dataSNR[pathId]) -1] > self.lastSNR[pathId]:
-					curDataSNR  = list(self.dataSNR [pathId]) # make a copy
+			if len(self.dataNoise[pathId]) > 0:
+				if self.dataNoise[pathId][len(self.dataNoise[pathId]) -1] > self.lastSNR[pathId]:
+					curdataNoise  = list(self.dataNoise [pathId]) # make a copy
 					curDataBER  = list(self.dataBER [pathId]) # make a copy
 					curDataFER  = list(self.dataFER [pathId]) # make a copy
 					curDataThr  = list(self.dataThr [pathId]) # make a copy
 					curDataBEFE = list(self.dataBEFE[pathId]) # make a copy
 
 					nPop = 0
-					for i in range(len(curDataSNR)):
-						if self.lastSNR[pathId] >= curDataSNR[i]:
+					for i in range(len(curdataNoise)):
+						if self.lastSNR[pathId] >= curdataNoise[i]:
 							nPop = i
 
 					for i in range(nPop):
-						curDataSNR .pop(0)
+						curdataNoise .pop(0)
 						curDataBER .pop(0)
 						curDataFER .pop(0)
 						curDataBEFE.pop(0)
 						curDataThr .pop(0)
 
-					self.plotCurve(pathId, curDataSNR, curDataBER, curDataFER, curDataBEFE, curDataThr)
-					self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
-				elif self.dataSNR[pathId][len(self.dataSNR[pathId]) -1] < self.lastSNR[pathId]:
+					self.plotCurve(pathId, curdataNoise, curDataBER, curDataFER, curDataBEFE, curDataThr)
+					self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
+				elif self.dataNoise[pathId][len(self.dataNoise[pathId]) -1] < self.lastSNR[pathId]:
 					self.updateCurves()
-					self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
+					self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
 			else:
 				self.updateCurves()
 				self.lastSNR[pathId] = -999.0
@@ -228,11 +247,10 @@ class AdvTreeView(QtGui.QTreeView):
 		self.wThr .clearPlots()
 
 		for pathId in range(len(self.paths)):
-			self.plotCurve(pathId, self.dataSNR[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId])
+			self.plotCurve(pathId, self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId])
 
 	def updateDataAndCurve(self, path):
-		self.updateData(path)
-		self.updateCurve(path)
+		self.refresh()
 
 	def updateDetails(self):
 		self.wDeta.clear()
@@ -288,18 +306,6 @@ class AdvTreeView(QtGui.QTreeView):
 		newPaths = [ self.model().filePath(index) for index in self.selectedIndexes()
 		                if not self.model().isDir(index)] # TODO: remove this restriction
 
-		self.dataSNR  = [0 for x in range(len(newPaths))]
-		self.dataBER  = [0 for x in range(len(newPaths))]
-		self.dataFER  = [0 for x in range(len(newPaths))]
-		self.dataBEFE = [0 for x in range(len(newPaths))]
-		self.dataThr  = [0 for x in range(len(newPaths))]
-		self.dataDeta = [0 for x in range(len(newPaths))]
-		self.lastSNR  = [0 for x in range(len(newPaths))]
-
-		for name in self.dataName:
-			self.removeLegendItem(name)
-		self.dataName = [0 for x in range(len(newPaths))]
-
 		if not len(newPaths):
 			self.hideLegend()
 		else:
@@ -326,17 +332,7 @@ class AdvTreeView(QtGui.QTreeView):
 		if len(pathsToAdd) > 0:
 			self.fsWatcher.addPaths(pathsToAdd)
 
-		for path in self.paths:
-			self.updateData(path)
-
-		for pathId in range(len(self.paths)):
-			if len(self.dataSNR[pathId]) > 0:
-				self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
-			else:
-				self.lastSNR[pathId] = -999.0
-
-		self.updateCurves()
-		self.updateDetails()
+		self.refresh()
 
 def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	if len(sys.argv) >= 2:
