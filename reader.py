@@ -70,7 +70,6 @@ def dataReader(filename, NoiseType):
 	for line in aFile:
 		lines.append(line)
 	aFile.close()
-	foundLegend = False
 
 	legend    = []
 	data      = []
@@ -102,11 +101,13 @@ def dataReader(filename, NoiseType):
 
 			elif len(line) > 20 and (line.find("FRA |") != -1 or line.find("BER |") != -1 or line.find("FER |") != -1):
 				legend = getLegend(line)
-				foundLegend = True
 
 		else:
-			if foundLegend:
-				data.append(getVal(line))
+			if len(legend) != 0:
+				d = getVal(line)
+				if len(d) == len(legend):
+					data.append(d)
+
 
 	data = np.array(data).transpose()
 
@@ -166,7 +167,10 @@ def dataReader(filename, NoiseType):
 		dataBEFE = [0 for x in range(len(dataNoise))]
 
 		for i in range(len(dataBEFE)):
-			dataBEFE[i] = dataBE[i]/dataFE[i]
+			try:
+				dataBEFE[i] = dataBE[i]/dataFE[i]
+			except ZeroDivisionError:
+				dataBEFE[i] = float(0)
 
 		# set Througput
 		idx = getLegendIdx(legend, "SIM_THR")
