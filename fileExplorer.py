@@ -29,6 +29,11 @@ from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
 from lib.pyqtgraph.pyqtgraph.dockarea import *
 import numpy as np
 
+legendPosRight  = ()
+legendPosLeft   = ()
+legendPosBottom = ()
+legendPosTop    = ()
+
 class AdvTreeView(QtGui.QTreeView):
 	wBER      = []
 	wFER      = []
@@ -60,6 +65,7 @@ class AdvTreeView(QtGui.QTreeView):
 	dashPatterns    = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
 	NoiseType       = ["Eb/N0",      "Es/N0",      "MI",          "ROP",                         "EP"                 ]
 	NoiseTypeLabel  = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
+	LegendPosition  = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
 
 	def __init__(self, wBER, wFER, wBEFE, wThr, wDeta):
 		super().__init__()
@@ -90,14 +96,24 @@ class AdvTreeView(QtGui.QTreeView):
 		if self.NoiseTypeIdx == len(self.NoiseType):
 			self.NoiseTypeIdx = 0
 
-		# set label
+		self.setLabel()
+		self.refresh()
+
+	def switchNoiseTypeRevert(self):
+		if self.NoiseTypeIdx == 0:
+			self.NoiseTypeIdx = len(self.NoiseType) -1
+		else:
+			self.NoiseTypeIdx -= 1
+
+		self.setLabel()
+		self.refresh()
+
+	def setLabel(self):
 		newLabel = self.NoiseTypeLabel[self.NoiseTypeIdx]
 		self.wBER .setLabel('bottom', newLabel)
 		self.wFER .setLabel('bottom', newLabel)
 		self.wBEFE.setLabel('bottom', newLabel)
 		self.wThr .setLabel('bottom', newLabel)
-
-		self.refresh()
 
 	def refresh(self):
 		self.dataNoise = [0 for x in range(len(self.paths))]
@@ -221,11 +237,11 @@ class AdvTreeView(QtGui.QTreeView):
 							nPop = i
 
 					for i in range(nPop):
-						curDataNoise .pop(0)
-						curDataBER .pop(0)
-						curDataFER .pop(0)
-						curDataBEFE.pop(0)
-						curDataThr .pop(0)
+						curDataNoise.pop(0)
+						curDataBER  .pop(0)
+						curDataFER  .pop(0)
+						curDataBEFE .pop(0)
+						curDataThr  .pop(0)
 
 					self.plotCurve(pathId, curDataNoise, curDataBER, curDataFER, curDataBEFE, curDataThr)
 					self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]

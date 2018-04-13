@@ -106,8 +106,13 @@ exitAction.triggered.connect(lambda: sys.exit(0))
 
 switchNoiseTypeAction = QtGui.QAction('&Switch Noise type', win)
 switchNoiseTypeAction.setShortcut('Ctrl+E')
-switchNoiseTypeAction.setStatusTip('Switch abscissa between Es/N0, Eb/N0, MI, ROP, EP...')
+switchNoiseTypeAction.setStatusTip('Switch abscissa between Eb/N0, Es/N0, MI, ROP, EP...')
 switchNoiseTypeAction.triggered.connect(lambda: wFile.switchNoiseType())
+
+switchNoiseTypeRevertAction = QtGui.QAction('&Switch Noise type (revert order)', win)
+switchNoiseTypeRevertAction.setShortcut('Ctrl+Shift+E')
+switchNoiseTypeRevertAction.setStatusTip('Switch abscissa between EP, ROP, MI, Es/N0, Eb/N0...')
+switchNoiseTypeRevertAction.triggered.connect(lambda: wFile.switchNoiseTypeRevert())
 
 switchFileFilterAction = QtGui.QAction('&Activate/Deactivate File Filter', win)
 switchFileFilterAction.setStatusTip('Activate or Deactivate the File Filter (*.perf, *.dat, *.txt, *.data)')
@@ -126,6 +131,7 @@ fileMenu.addAction(exitAction)
 optionMenu = menubar.addMenu('&Display')
 optionMenu.addAction(refreshAction)
 optionMenu.addAction(switchNoiseTypeAction)
+optionMenu.addAction(switchNoiseTypeRevertAction)
 optionMenu.addAction(switchFileFilterAction)
 
 # -----------------------------------------------------------------------------
