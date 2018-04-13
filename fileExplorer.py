@@ -42,7 +42,7 @@ class AdvTreeView(QtGui.QTreeView):
 	lBEFE = []
 	lThr  = []
 
-	NoiseType = []
+	NoiseTypeIdx = []
 
 	dataNoise  = []
 	dataBER    = []
@@ -52,12 +52,14 @@ class AdvTreeView(QtGui.QTreeView):
 	dataDeta   = []
 	dataName   = []
 
-	#               1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
-	colors       = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
-	lastSNR      = []
-	paths        = []
-	styles       = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
-	dashPatterns = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
+	#                  1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
+	colors          = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
+	lastSNR         = []
+	paths           = []
+	styles          = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
+	dashPatterns    = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
+	NoiseType       = ["Eb/N0",      "Es/N0",      "MI",          "ROP",                         "EP"                 ]
+	NoiseTypeLabel  = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
 
 	def __init__(self, wBER, wFER, wBEFE, wThr, wDeta):
 		super().__init__()
@@ -74,7 +76,7 @@ class AdvTreeView(QtGui.QTreeView):
 		self.lBEFE = self.wBEFE.addLegend()
 		self.lThr  = self.wThr .addLegend()
 
-		self.NoiseType = "Eb/N0"
+		self.NoiseTypeIdx = 0
 
 		self.hideLegend()
 
@@ -83,25 +85,19 @@ class AdvTreeView(QtGui.QTreeView):
 		self.fsWatcher.fileChanged.connect(self.updateDataAndCurve)
 
 	def switchNoiseType(self):
-		if self.NoiseType == "Eb/N0":
-			self.NoiseType = "Es/N0"
-		elif self.NoiseType == "Es/N0":
-			self.NoiseType = "MI"
-		else:
-			self.NoiseType = "Eb/N0"
+		self.NoiseTypeIdx += 1
 
-		if self.NoiseType == "MI":
-			self.setLabel("Mutual Info")
-		else:
-			self.setLabel(self.NoiseType + " (dB)")
+		if self.NoiseTypeIdx == len(self.NoiseType):
+			self.NoiseTypeIdx = 0
 
-		self.refresh()
-
-	def setLabel(newLabel):
+		# set label
+		newLabel = self.NoiseTypeLabel[self.NoiseTypeIdx]
 		self.wBER .setLabel('bottom', newLabel)
 		self.wFER .setLabel('bottom', newLabel)
 		self.wBEFE.setLabel('bottom', newLabel)
 		self.wThr .setLabel('bottom', newLabel)
+
+		self.refresh()
 
 	def refresh(self):
 		self.dataNoise = [0 for x in range(len(self.paths))]
@@ -183,7 +179,7 @@ class AdvTreeView(QtGui.QTreeView):
 
 			self.dataName[pathId] = []
 			dataName = []
-			self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType)
+			self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType[self.NoiseTypeIdx])
 
 			if not dataName:
 				self.dataName[pathId] = "Curve " + str(pathId)
