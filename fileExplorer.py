@@ -179,17 +179,10 @@ class AdvTreeView(QtGui.QTreeView):
 
 	def showLegend(self):
 		# display the legend
-		if self.lBER:
-			self.lBER = self.setLegendPosition(self.lBER, self.BERLegendPosition[self.NoiseTypeIdx])
-
-		if self.lFER:
-			self.lFER = self.setLegendPosition(self.lFER, self.FERLegendPosition[self.NoiseTypeIdx])
-
-		if self.lBEFE:
-			self.lBEFE = self.setLegendPosition(self.lBEFE, self.BEFELegendPosition[self.NoiseTypeIdx])
-
-		if self.lThr:
-			self.lThr = self.setLegendPosition(self.lThr, self.ThrLegendPosition[self.NoiseTypeIdx])
+		if self.lBER:  self.lBER  = self.setLegendPosition(self.lBER,  self.BERLegendPosition [self.NoiseTypeIdx])
+		if self.lFER:  self.lFER  = self.setLegendPosition(self.lFER,  self.FERLegendPosition [self.NoiseTypeIdx])
+		if self.lBEFE: self.lBEFE = self.setLegendPosition(self.lBEFE, self.BEFELegendPosition[self.NoiseTypeIdx])
+		if self.lThr:  self.lThr  = self.setLegendPosition(self.lThr,  self.ThrLegendPosition [self.NoiseTypeIdx])
 
 	def removeLegendItem(self, name):
 		if self.lBER:  self.lBER .removeItem(name)
