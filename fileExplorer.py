@@ -59,12 +59,12 @@ class AdvTreeView(QtGui.QTreeView):
 	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
 	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
 
-	NoiseType          = ["Eb/N0",      "Es/N0",      "MI",          "ROP",                         "EP"                 ]
-	NoiseTypeLabel     = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
-	BERLegendPosition  = ["BottomLeft", "BottomLeft", "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
-	FERLegendPosition  = ["BottomLeft", "BottomLeft", "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
-	BEFELegendPosition = ["TopRight",   "TopRight",   "TopRight",    "TopRight",                    "BottomRight"        ]
-	ThrLegendPosition  = ["TopRight",   "TopRight",   "TopRight",    "TopRight",                    "TopRight"           ]
+	NoiseType          = ["Eb/N0",       "Es/N0",       "MI",          "ROP",                         "EP"                 ]
+	NoiseTypeLabel     = ["Eb/N0 (dB)",  "Es/N0 (dB)",  "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
+	BERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
+	FERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
+	BEFELegendPosition = ["TopRight",    "TopRight",    "TopRight",    "TopRight",                    "BottomRight"        ]
+	ThrLegendPosition  = ["BottomRight", "BottomRight", "BottomRight", "BottomRight",                 "BottomRight"        ]
 
 	def __init__(self, wBER, wFER, wBEFE, wThr, wDeta):
 		super().__init__()
@@ -95,8 +95,8 @@ class AdvTreeView(QtGui.QTreeView):
 		if self.NoiseTypeIdx == len(self.NoiseType):
 			self.NoiseTypeIdx = 0
 
-		self.setLabel()
 		self.refresh()
+		self.setLabel()
 
 	def switchNoiseTypeRevert(self):
 		if self.NoiseTypeIdx == 0:
@@ -104,8 +104,8 @@ class AdvTreeView(QtGui.QTreeView):
 		else:
 			self.NoiseTypeIdx -= 1
 
-		self.setLabel()
 		self.refresh()
+		self.setLabel()
 
 	def setLabel(self):
 		newLabel = self.NoiseTypeLabel[self.NoiseTypeIdx]
@@ -114,11 +114,12 @@ class AdvTreeView(QtGui.QTreeView):
 		self.wBEFE.setLabel('bottom', newLabel)
 		self.wThr .setLabel('bottom', newLabel)
 
-	def refresh(self):
-		self.hideLegend()
 		if len(self.paths):
 			self.showLegend()
+		else:
+			self.hideLegend()
 
+	def refresh(self):
 		self.dataNoise = [0 for x in range(len(self.paths))]
 		self.dataBER   = [0 for x in range(len(self.paths))]
 		self.dataFER   = [0 for x in range(len(self.paths))]
@@ -352,7 +353,8 @@ class AdvTreeView(QtGui.QTreeView):
 		if len(pathsToAdd) > 0:
 			self.fsWatcher.addPaths(pathsToAdd)
 
-		self.refresh()
+		self.refresh ()
+		self.setLabel()
 
 def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	if len(sys.argv) >= 2:
