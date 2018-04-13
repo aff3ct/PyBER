@@ -104,10 +104,10 @@ exitAction.setShortcut('Ctrl+Q')
 exitAction.setStatusTip('Exit application')
 exitAction.triggered.connect(lambda: sys.exit(0))
 
-switchEbEsMIAction = QtGui.QAction('&Switch Noise type', win)
-switchEbEsMIAction.setShortcut('Ctrl+E')
-switchEbEsMIAction.setStatusTip('Switch between Es/N0, Eb/N0, MI, ROP, EP...')
-switchEbEsMIAction.triggered.connect(lambda: wFile.switchNoiseType())
+switchNoiseTypeAction = QtGui.QAction('&Switch Noise type', win)
+switchNoiseTypeAction.setShortcut('Ctrl+E')
+switchNoiseTypeAction.setStatusTip('Switch abscissa between Es/N0, Eb/N0, MI, ROP, EP...')
+switchNoiseTypeAction.triggered.connect(lambda: wFile.switchNoiseType())
 
 switchFileFilterAction = QtGui.QAction('&Activate/Deactivate File Filter', win)
 switchFileFilterAction.setStatusTip('Activate or Deactivate the File Filter (*.perf, *.dat, *.txt, *.data)')
@@ -125,7 +125,7 @@ fileMenu = menubar.addMenu('&File')
 fileMenu.addAction(exitAction)
 optionMenu = menubar.addMenu('&Display')
 optionMenu.addAction(refreshAction)
-optionMenu.addAction(switchEbEsMIAction)
+optionMenu.addAction(switchNoiseTypeAction)
 optionMenu.addAction(switchFileFilterAction)
 
 # -----------------------------------------------------------------------------

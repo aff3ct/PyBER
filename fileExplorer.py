@@ -209,25 +209,25 @@ class AdvTreeView(QtGui.QTreeView):
 
 			if len(self.dataNoise[pathId]) > 0:
 				if self.dataNoise[pathId][len(self.dataNoise[pathId]) -1] > self.lastSNR[pathId]:
-					curdataNoise  = list(self.dataNoise [pathId]) # make a copy
-					curDataBER  = list(self.dataBER [pathId]) # make a copy
-					curDataFER  = list(self.dataFER [pathId]) # make a copy
-					curDataThr  = list(self.dataThr [pathId]) # make a copy
-					curDataBEFE = list(self.dataBEFE[pathId]) # make a copy
+					curDataNoise = list(self.dataNoise [pathId]) # make a copy
+					curDataBER   = list(self.dataBER [pathId]) # make a copy
+					curDataFER   = list(self.dataFER [pathId]) # make a copy
+					curDataThr   = list(self.dataThr [pathId]) # make a copy
+					curDataBEFE  = list(self.dataBEFE[pathId]) # make a copy
 
 					nPop = 0
-					for i in range(len(curdataNoise)):
-						if self.lastSNR[pathId] >= curdataNoise[i]:
+					for i in range(len(curDataNoise)):
+						if self.lastSNR[pathId] >= curDataNoise[i]:
 							nPop = i
 
 					for i in range(nPop):
-						curdataNoise .pop(0)
+						curDataNoise .pop(0)
 						curDataBER .pop(0)
 						curDataFER .pop(0)
 						curDataBEFE.pop(0)
 						curDataThr .pop(0)
 
-					self.plotCurve(pathId, curdataNoise, curDataBER, curDataFER, curDataBEFE, curDataThr)
+					self.plotCurve(pathId, curDataNoise, curDataBER, curDataFER, curDataBEFE, curDataThr)
 					self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
 				elif self.dataNoise[pathId][len(self.dataNoise[pathId]) -1] < self.lastSNR[pathId]:
 					self.updateCurves()
