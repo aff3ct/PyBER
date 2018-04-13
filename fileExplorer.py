@@ -158,12 +158,10 @@ class AdvTreeView(QtGui.QTreeView):
 
 	def hideLegend(self):
 		# hide the legend
-		if self.lBER:  self.lBER .anchor(itemPos=(0,1), parentPos=(0,1), offset=(-1000,-10))
-		if self.lFER:  self.lFER .anchor(itemPos=(0,1), parentPos=(0,1), offset=(-1000,-10))
-		# if self.lBER:  self.lBER .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000,-10))
-		# if self.lFER:  self.lFER .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000,-10))
-		if self.lBEFE: self.lBEFE.anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000, 10))
-		if self.lThr:  self.lThr .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000, 10))
+		if self.lBER:  self.lBER  = self.setLegendPosition(self.lBER,  "Hide")
+		if self.lFER:  self.lFER  = self.setLegendPosition(self.lFER,  "Hide")
+		if self.lBEFE: self.lBEFE = self.setLegendPosition(self.lBEFE, "Hide")
+		if self.lThr:  self.lThr  = self.setLegendPosition(self.lThr,  "Hide")
 
 	def setLegendPosition(self, legend, pos):
 		if pos == "BottomLeft":
@@ -174,6 +172,8 @@ class AdvTreeView(QtGui.QTreeView):
 			legend.anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
 		elif pos == "TopLeft":
 			legend.anchor(itemPos=(0,0), parentPos=(0,0), offset=( 10, 10))
+		elif pos == "Hide":
+			legend.anchor(itemPos=(1,0), parentPos=(1,0), offset=(100, 100))
 
 		return legend
 
