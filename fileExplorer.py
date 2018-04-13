@@ -29,11 +29,6 @@ from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
 from lib.pyqtgraph.pyqtgraph.dockarea import *
 import numpy as np
 
-legendPosRight  = ()
-legendPosLeft   = ()
-legendPosBottom = ()
-legendPosTop    = ()
-
 class AdvTreeView(QtGui.QTreeView):
 	wBER      = []
 	wFER      = []
@@ -57,15 +52,19 @@ class AdvTreeView(QtGui.QTreeView):
 	dataDeta   = []
 	dataName   = []
 
-	#                  1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
-	colors          = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
-	lastSNR         = []
-	paths           = []
-	styles          = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
-	dashPatterns    = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
-	NoiseType       = ["Eb/N0",      "Es/N0",      "MI",          "ROP",                         "EP"                 ]
-	NoiseTypeLabel  = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
-	LegendPosition  = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
+	#                     1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
+	colors             = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
+	lastSNR            = []
+	paths              = []
+	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
+	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
+
+	NoiseType          = ["Eb/N0",      "Es/N0",      "MI",          "ROP",                         "EP"                 ]
+	NoiseTypeLabel     = ["Eb/N0 (dB)", "Es/N0 (dB)", "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
+	BERLegendPosition  = ["BottomLeft", "BottomLeft", "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
+	FERLegendPosition  = ["BottomLeft", "BottomLeft", "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
+	BEFELegendPosition = ["TopRight",   "TopRight",   "TopRight",    "TopRight",                    "BottomRight"        ]
+	ThrLegendPosition  = ["TopRight",   "TopRight",   "TopRight",    "TopRight",                    "TopRight"           ]
 
 	def __init__(self, wBER, wFER, wBEFE, wThr, wDeta):
 		super().__init__()
@@ -116,6 +115,10 @@ class AdvTreeView(QtGui.QTreeView):
 		self.wThr .setLabel('bottom', newLabel)
 
 	def refresh(self):
+		self.hideLegend()
+		if len(self.paths):
+			self.showLegend()
+
 		self.dataNoise = [0 for x in range(len(self.paths))]
 		self.dataBER   = [0 for x in range(len(self.paths))]
 		self.dataFER   = [0 for x in range(len(self.paths))]
@@ -162,14 +165,31 @@ class AdvTreeView(QtGui.QTreeView):
 		if self.lBEFE: self.lBEFE.anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000, 10))
 		if self.lThr:  self.lThr .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000, 10))
 
+	def setLegendPosition(self, legend, pos):
+		if pos == "BottomLeft":
+			legend.anchor(itemPos=(0,1), parentPos=(0,1), offset=( 10,-10))
+		elif pos == "BottomRight":
+			legend.anchor(itemPos=(1,1), parentPos=(1,1), offset=(-10,-10))
+		elif pos == "TopRight":
+			legend.anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
+		elif pos == "TopLeft":
+			legend.anchor(itemPos=(0,0), parentPos=(0,0), offset=( 10, 10))
+
+		return legend
+
 	def showLegend(self):
 		# display the legend
-		if self.lBER:  self.lBER .anchor(itemPos=(0,1), parentPos=(0,1), offset=( 10,-10))
-		if self.lFER:  self.lFER .anchor(itemPos=(0,1), parentPos=(0,1), offset=( 10,-10))
-		# if self.lBER:  self.lBER .anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
-		# if self.lFER:  self.lFER .anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
-		if self.lBEFE: self.lBEFE.anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
-		if self.lThr:  self.lThr .anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
+		if self.lBER:
+			self.lBER = self.setLegendPosition(self.lBER, self.BERLegendPosition[self.NoiseTypeIdx])
+
+		if self.lFER:
+			self.lFER = self.setLegendPosition(self.lFER, self.FERLegendPosition[self.NoiseTypeIdx])
+
+		if self.lBEFE:
+			self.lBEFE = self.setLegendPosition(self.lBEFE, self.BEFELegendPosition[self.NoiseTypeIdx])
+
+		if self.lThr:
+			self.lThr = self.setLegendPosition(self.lThr, self.ThrLegendPosition[self.NoiseTypeIdx])
 
 	def removeLegendItem(self, name):
 		if self.lBER:  self.lBER .removeItem(name)
@@ -317,11 +337,6 @@ class AdvTreeView(QtGui.QTreeView):
 		super().selectionChanged(selected, deselected)
 		newPaths = [ self.model().filePath(index) for index in self.selectedIndexes()
 		                if not self.model().isDir(index)] # TODO: remove this restriction
-
-		if not len(newPaths):
-			self.hideLegend()
-		else:
-			self.showLegend()
 
 		pathsToRemove = []
 		for p in self.paths:
