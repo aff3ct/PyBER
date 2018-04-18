@@ -115,26 +115,25 @@ def dataReader(filename, NoiseType):
 	dataDeta.append(["File name", os.path.basename(filename)])
 
 	# get the command to to run to reproduce this trace
-	if lines and "Run command:" in lines[0]:
+	if len(lines) >= 2 and "Run command:" in lines[0]:
 		dataDeta.append(["Run command", str(lines[1].strip())])
-	else:
-		dataDeta.append(["Run command", ""])
-	if lines and "Run command:" in lines[2]:
+	elif len(lines) >= 4 and "Run command:" in lines[2]:
 		dataDeta.append(["Run command", str(lines[3].strip())])
 	else:
 		dataDeta.append(["Run command", ""])
 
 	# get the curve name (if there is one)
-	if lines and "Curve name:" in lines[0]:
+	if len(lines) >= 2 and "Curve name:" in lines[0]:
 		dataName = str(lines[1].strip())
-	if lines and "Curve name:" in lines[2]:
+	elif len(lines) >= 4 and "Curve name:" in lines[2]:
 		dataName = str(lines[3].strip())
+	else:
+		dataName = ""
 
 	idx = getLegendIdx(legend, NoiseType)
 
 	if len(data) and idx != -1 :
 		# set noise range
-		idx = getLegendIdx(legend, NoiseType)
 		dataNoise = data[idx]
 
 		# set BER
@@ -167,10 +166,10 @@ def dataReader(filename, NoiseType):
 		dataBEFE = [0 for x in range(len(dataNoise))]
 
 		for i in range(len(dataBEFE)):
-			try:
-				dataBEFE[i] = dataBE[i]/dataFE[i]
-			except ZeroDivisionError:
+			if dataFE[i] == float(0):
 				dataBEFE[i] = float(0)
+			else:
+				dataBEFE[i] = dataBE[i]/dataFE[i]
 
 		# set Througput
 		idx = getLegendIdx(legend, "SIM_THR")
