@@ -120,28 +120,22 @@ class AdvTreeView(QtGui.QTreeView):
 			self.hideLegend()
 
 	def refresh(self):
-		self.dataNoise = [0 for x in range(len(self.paths))]
-		self.dataBER   = [0 for x in range(len(self.paths))]
-		self.dataFER   = [0 for x in range(len(self.paths))]
-		self.dataBEFE  = [0 for x in range(len(self.paths))]
-		self.dataThr   = [0 for x in range(len(self.paths))]
-		self.dataDeta  = [0 for x in range(len(self.paths))]
-		self.lastSNR   = [0 for x in range(len(self.paths))]
-
 		for name in self.dataName:
 			self.removeLegendItem(name)
-		self.dataName = [0 for x in range(len(self.paths))]
+
+		self.dataName  = [[] for x in range(len(self.paths))]
+		self.dataNoise = [[] for x in range(len(self.paths))]
+		self.dataBER   = [[] for x in range(len(self.paths))]
+		self.dataFER   = [[] for x in range(len(self.paths))]
+		self.dataBEFE  = [[] for x in range(len(self.paths))]
+		self.dataThr   = [[] for x in range(len(self.paths))]
+		self.dataDeta  = [[] for x in range(len(self.paths))]
+		self.lastSNR   = [[] for x in range(len(self.paths))]
 
 		for path in self.paths:
 			self.updateData(path)
 
-		for pathId in range(len(self.paths)):
-			if len(self.dataNoise[pathId]) > 0:
-				self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
-			else:
-				self.lastSNR[pathId] = -999.0
-
-		self.updateCurves()
+		self.updateCurves ()
 		self.updateDetails()
 
 	def switchFileFilter(self):
@@ -204,67 +198,26 @@ class AdvTreeView(QtGui.QTreeView):
 			return -1
 
 	def updateData(self, path):
-		if path in self.paths:
-			pathId = self.getPathId(path)
+		pathId = self.getPathId(path)
+		if pathId == -1:
+			return
 
-			self.dataName[pathId] = []
-			dataName = []
-			self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType[self.NoiseTypeIdx])
+		self.dataName[pathId] = []
+		dataName = []
+		self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType[self.NoiseTypeIdx])
 
-			if not dataName:
-				self.dataName[pathId] = "Curve " + str(pathId)
-			elif dataName in self.dataName:
-				self.dataName[pathId] = dataName + "_" + str(pathId)
-			else:
-				self.dataName[pathId] = dataName
+		if not dataName:
+			self.dataName[pathId] = "Curve " + str(pathId)
+		elif dataName in self.dataName:
+			self.dataName[pathId] = dataName + "_" + str(pathId)
+		else:
+			self.dataName[pathId] = dataName
 
-			if len(self.dataNoise[pathId]) == 0:
-				self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
-
-	def plotCurve(self, pathId, dataNoise, dataBER, dataFER, dataBEFE, dataThr):
-		icolor = self.colors[pathId % len(self.colors)]
-		pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
-		pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
-
-		self.removeLegendItem(self.dataName[pathId])
-
-		self.wBER. plot(x=dataNoise, y=dataBER,  pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wFER. plot(x=dataNoise, y=dataFER,  pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wBEFE.plot(x=dataNoise, y=dataBEFE, pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wThr. plot(x=dataNoise, y=dataThr,  pen=pen, symbol='x', name=self.dataName[pathId])
-
-	def updateCurve(self, path):
-		if path in self.paths:
-			pathId = self.getPathId(path)
-
-			if len(self.dataNoise[pathId]) > 0:
-				if self.dataNoise[pathId][len(self.dataNoise[pathId]) -1] > self.lastSNR[pathId]:
-					curDataNoise = list(self.dataNoise [pathId]) # make a copy
-					curDataBER   = list(self.dataBER [pathId]) # make a copy
-					curDataFER   = list(self.dataFER [pathId]) # make a copy
-					curDataThr   = list(self.dataThr [pathId]) # make a copy
-					curDataBEFE  = list(self.dataBEFE[pathId]) # make a copy
-
-					nPop = 0
-					for i in range(len(curDataNoise)):
-						if self.lastSNR[pathId] >= curDataNoise[i]:
-							nPop = i
-
-					for i in range(nPop):
-						curDataNoise.pop(0)
-						curDataBER  .pop(0)
-						curDataFER  .pop(0)
-						curDataBEFE .pop(0)
-						curDataThr  .pop(0)
-
-					self.plotCurve(pathId, curDataNoise, curDataBER, curDataFER, curDataBEFE, curDataThr)
-					self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
-				elif self.dataNoise[pathId][len(self.dataNoise[pathId]) -1] < self.lastSNR[pathId]:
-					self.updateCurves()
-					self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
-			else:
-				self.updateCurves()
-				self.lastSNR[pathId] = -999.0
+		if len(self.dataNoise[pathId]) == 0:
+			self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
+			self.lastSNR[pathId] = -999.0
+		else:
+			self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
 
 	def updateCurves(self):
 		self.wBER .clearPlots()
@@ -272,8 +225,18 @@ class AdvTreeView(QtGui.QTreeView):
 		self.wBEFE.clearPlots()
 		self.wThr .clearPlots()
 
+		# plot the curves
 		for pathId in range(len(self.paths)):
-			self.plotCurve(pathId, self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId])
+			icolor = self.colors[pathId % len(self.colors)]
+			pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
+			pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
+
+			self.removeLegendItem(self.dataName[pathId])
+
+			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER[pathId],  pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER[pathId],  pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wBEFE.plot(x=self.dataNoise[pathId], y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wThr. plot(x=self.dataNoise[pathId], y=self.dataThr[pathId],  pen=pen, symbol='x', name=self.dataName[pathId])
 
 	def updateDataAndCurve(self, path):
 		self.refresh()
