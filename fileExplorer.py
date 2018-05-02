@@ -24,6 +24,7 @@ import os
 import sys
 import reader
 import subprocess
+import time
 import lib.pyqtgraph.pyqtgraph as pg
 from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
 from lib.pyqtgraph.pyqtgraph.dockarea import *
@@ -82,6 +83,7 @@ class AdvTreeView(QtGui.QTreeView):
 		self.lThr  = self.wThr .addLegend()
 
 		self.NoiseTypeIdx = 0
+		self.refreshing_time = time.time()
 
 		self.hideLegend()
 
@@ -233,13 +235,15 @@ class AdvTreeView(QtGui.QTreeView):
 
 			self.removeLegendItem(self.dataName[pathId])
 
-			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER[pathId],  pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER[pathId],  pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
 			self.wBEFE.plot(x=self.dataNoise[pathId], y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wThr. plot(x=self.dataNoise[pathId], y=self.dataThr[pathId],  pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wThr. plot(x=self.dataNoise[pathId], y=self.dataThr [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
 
 	def updateDataAndCurve(self, path):
-		self.refresh()
+		if (self.refreshing_time + 0.1) < time.time(): # timer to not freeze because of several refreshes asked at the same time
+			self.refresh()
+			self.refreshing_time = time.time()
 
 	def updateDetails(self):
 		self.wDeta.clear()
