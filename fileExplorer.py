@@ -83,6 +83,7 @@ class AdvTreeView(QtGui.QTreeView):
 		self.lThr  = self.wThr .addLegend()
 
 		self.NoiseTypeIdx = 0
+		self.NoiseSelectedByUser = False
 		self.refreshing_time = time.time()
 
 		self.hideLegend()
@@ -99,6 +100,7 @@ class AdvTreeView(QtGui.QTreeView):
 
 		self.refresh()
 		self.setLabel()
+		self.NoiseSelectedByUser = True
 
 	def switchNoiseTypeRevert(self):
 		if self.NoiseTypeIdx == 0:
@@ -108,6 +110,7 @@ class AdvTreeView(QtGui.QTreeView):
 
 		self.refresh()
 		self.setLabel()
+		self.NoiseSelectedByUser = True
 
 	def setLabel(self):
 		newLabel = self.NoiseTypeLabel[self.NoiseTypeIdx]
@@ -322,6 +325,36 @@ class AdvTreeView(QtGui.QTreeView):
 
 		self.refresh ()
 		self.setLabel()
+
+		if not self.NoiseSelectedByUser:
+			self.autoSelectNoise()
+
+	def autoSelectNoise(self):
+		save = self.NoiseTypeIdx
+
+		found = False
+
+		for i in range(len(self.NoiseType)):
+			self.NoiseTypeIdx = i
+			self.refresh()
+
+			for n in self.dataNoise:
+				if len(n) > 0:
+					found = True
+					break;
+
+			if found:
+				self.setLabel()
+				break;
+
+		if not found:
+			self.NoiseTypeIdx = save
+			self.refresh ()
+			self.setLabel()
+
+		self.NoiseSelectedByUser = False
+
+
 
 def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	if len(sys.argv) >= 2:
