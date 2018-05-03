@@ -60,12 +60,12 @@ class AdvTreeView(QtGui.QTreeView):
 	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
 	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
 
-	NoiseType          = ["Eb/N0",       "Es/N0",       "MI",          "ROP",                         "EP"                 ]
-	NoiseTypeLabel     = ["Eb/N0 (dB)",  "Es/N0 (dB)",  "Mutual Info", "Received Optical Power (dB)", "Erasure Probability"]
-	BERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
-	FERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"        ]
-	BEFELegendPosition = ["TopRight",    "TopRight",    "TopRight",    "TopRight",                    "BottomRight"        ]
-	ThrLegendPosition  = ["BottomRight", "BottomRight", "BottomRight", "BottomRight",                 "BottomRight"        ]
+	NoiseType          = ["Eb/N0",       "Es/N0",       "MI",          "ROP",                         "EP"               ]
+	NoiseTypeLabel     = ["Eb/N0 (dB)",  "Es/N0 (dB)",  "Mutual Info", "Received Optical Power (dB)", "Event Probability"]
+	BERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
+	FERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
+	BEFELegendPosition = ["TopRight",    "TopRight",    "TopRight",    "TopRight",                    "BottomRight"      ]
+	ThrLegendPosition  = ["BottomRight", "BottomRight", "BottomRight", "BottomRight",                 "BottomRight"      ]
 
 	def __init__(self, wBER, wFER, wBEFE, wThr, wDeta):
 		super().__init__()
