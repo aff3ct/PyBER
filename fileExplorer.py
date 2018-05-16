@@ -24,6 +24,7 @@ import os
 import sys
 import reader
 import subprocess
+import time
 import lib.pyqtgraph.pyqtgraph as pg
 from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
 from lib.pyqtgraph.pyqtgraph.dockarea import *
@@ -42,22 +43,29 @@ class AdvTreeView(QtGui.QTreeView):
 	lBEFE = []
 	lThr  = []
 
-	EsEb = []
+	NoiseTypeIdx = []
 
-	dataSNR  = []
-	dataBER  = []
-	dataFER  = []
-	dataBEFE = []
-	dataThr  = []
-	dataDeta = []
-	dataName = []
+	dataNoise  = []
+	dataBER    = []
+	dataFER    = []
+	dataBEFE   = []
+	dataThr    = []
+	dataDeta   = []
+	dataName   = []
 
-	#               1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
-	colors       = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
-	lastSNR      = []
-	paths        = []
-	styles       = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
-	dashPatterns = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
+	#                     1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
+	colors             = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
+	lastSNR            = []
+	paths              = []
+	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
+	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
+
+	NoiseType          = ["Eb/N0",       "Es/N0",       "MI",          "ROP",                         "EP"               ]
+	NoiseTypeLabel     = ["Eb/N0 (dB)",  "Es/N0 (dB)",  "Mutual Info", "Received Optical Power (dB)", "Event Probability"]
+	BERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
+	FERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
+	BEFELegendPosition = ["TopRight",    "TopRight",    "TopRight",    "TopRight",                    "BottomRight"      ]
+	ThrLegendPosition  = ["BottomRight", "BottomRight", "BottomRight", "BottomRight",                 "BottomRight"      ]
 
 	def __init__(self, wBER, wFER, wBEFE, wThr, wDeta):
 		super().__init__()
@@ -74,7 +82,9 @@ class AdvTreeView(QtGui.QTreeView):
 		self.lBEFE = self.wBEFE.addLegend()
 		self.lThr  = self.wThr .addLegend()
 
-		self.EsEb = "Eb"
+		self.NoiseTypeIdx = 0
+		self.NoiseSelectedByUser = False
+		self.refreshing_time = time.time()
 
 		self.hideLegend()
 
@@ -82,26 +92,55 @@ class AdvTreeView(QtGui.QTreeView):
 		self.fsWatcher = QtCore.QFileSystemWatcher()
 		self.fsWatcher.fileChanged.connect(self.updateDataAndCurve)
 
-	def switchEsEb(self):
-		if self.EsEb == "Eb":
-			self.EsEb = "Es"
-		else:
-			self.EsEb = "Eb"
+	def switchNoiseType(self):
+		self.NoiseTypeIdx += 1
 
-		self.wBER .setLabel('bottom', self.EsEb + "/N0 (dB)")
-		self.wFER .setLabel('bottom', self.EsEb + "/N0 (dB)")
-		self.wBEFE.setLabel('bottom', self.EsEb + "/N0 (dB)")
-		self.wThr .setLabel('bottom', self.EsEb + "/N0 (dB)")
+		if self.NoiseTypeIdx == len(self.NoiseType):
+			self.NoiseTypeIdx = 0
 
 		self.refresh()
+		self.setLabel()
+		self.NoiseSelectedByUser = True
+
+	def switchNoiseTypeRevert(self):
+		if self.NoiseTypeIdx == 0:
+			self.NoiseTypeIdx = len(self.NoiseType) -1
+		else:
+			self.NoiseTypeIdx -= 1
+
+		self.refresh()
+		self.setLabel()
+		self.NoiseSelectedByUser = True
+
+	def setLabel(self):
+		newLabel = self.NoiseTypeLabel[self.NoiseTypeIdx]
+		self.wBER .setLabel('bottom', newLabel)
+		self.wFER .setLabel('bottom', newLabel)
+		self.wBEFE.setLabel('bottom', newLabel)
+		self.wThr .setLabel('bottom', newLabel)
+
+		if len(self.paths):
+			self.showLegend()
+		else:
+			self.hideLegend()
 
 	def refresh(self):
-		for path in self.paths:
-			self.updateData(path)
 		for name in self.dataName:
 			self.removeLegendItem(name)
 
-		self.updateCurves()
+		self.dataName  = [[] for x in range(len(self.paths))]
+		self.dataNoise = [[] for x in range(len(self.paths))]
+		self.dataBER   = [[] for x in range(len(self.paths))]
+		self.dataFER   = [[] for x in range(len(self.paths))]
+		self.dataBEFE  = [[] for x in range(len(self.paths))]
+		self.dataThr   = [[] for x in range(len(self.paths))]
+		self.dataDeta  = [[] for x in range(len(self.paths))]
+		self.lastSNR   = [[] for x in range(len(self.paths))]
+
+		for path in self.paths:
+			self.updateData(path)
+
+		self.updateCurves ()
 		self.updateDetails()
 
 	def switchFileFilter(self):
@@ -119,21 +158,31 @@ class AdvTreeView(QtGui.QTreeView):
 
 	def hideLegend(self):
 		# hide the legend
-		if self.lBER:  self.lBER .anchor(itemPos=(0,1), parentPos=(0,1), offset=(-1000,-10))
-		if self.lFER:  self.lFER .anchor(itemPos=(0,1), parentPos=(0,1), offset=(-1000,-10))
-		# if self.lBER:  self.lBER .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000,-10))
-		# if self.lFER:  self.lFER .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000,-10))
-		if self.lBEFE: self.lBEFE.anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000, 10))
-		if self.lThr:  self.lThr .anchor(itemPos=(1,0), parentPos=(1,0), offset=( 1000, 10))
+		if self.lBER:  self.lBER  = self.setLegendPosition(self.lBER,  "Hide")
+		if self.lFER:  self.lFER  = self.setLegendPosition(self.lFER,  "Hide")
+		if self.lBEFE: self.lBEFE = self.setLegendPosition(self.lBEFE, "Hide")
+		if self.lThr:  self.lThr  = self.setLegendPosition(self.lThr,  "Hide")
+
+	def setLegendPosition(self, legend, pos):
+		if pos == "BottomLeft":
+			legend.anchor(itemPos=(0,1), parentPos=(0,1), offset=( 10,-10))
+		elif pos == "BottomRight":
+			legend.anchor(itemPos=(1,1), parentPos=(1,1), offset=(-10,-10))
+		elif pos == "TopRight":
+			legend.anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
+		elif pos == "TopLeft":
+			legend.anchor(itemPos=(0,0), parentPos=(0,0), offset=( 10, 10))
+		elif pos == "Hide":
+			legend.anchor(itemPos=(1,0), parentPos=(1,0), offset=(100, 100))
+
+		return legend
 
 	def showLegend(self):
 		# display the legend
-		if self.lBER:  self.lBER .anchor(itemPos=(0,1), parentPos=(0,1), offset=( 10,-10))
-		if self.lFER:  self.lFER .anchor(itemPos=(0,1), parentPos=(0,1), offset=( 10,-10))
-		# if self.lBER:  self.lBER .anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
-		# if self.lFER:  self.lFER .anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
-		if self.lBEFE: self.lBEFE.anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
-		if self.lThr:  self.lThr .anchor(itemPos=(1,0), parentPos=(1,0), offset=(-10, 10))
+		if self.lBER:  self.lBER  = self.setLegendPosition(self.lBER,  self.BERLegendPosition [self.NoiseTypeIdx])
+		if self.lFER:  self.lFER  = self.setLegendPosition(self.lFER,  self.FERLegendPosition [self.NoiseTypeIdx])
+		if self.lBEFE: self.lBEFE = self.setLegendPosition(self.lBEFE, self.BEFELegendPosition[self.NoiseTypeIdx])
+		if self.lThr:  self.lThr  = self.setLegendPosition(self.lThr,  self.ThrLegendPosition [self.NoiseTypeIdx])
 
 	def removeLegendItem(self, name):
 		if self.lBER:  self.lBER .removeItem(name)
@@ -154,64 +203,26 @@ class AdvTreeView(QtGui.QTreeView):
 			return -1
 
 	def updateData(self, path):
-		if path in self.paths:
-			pathId = self.getPathId(path)
+		pathId = self.getPathId(path)
+		if pathId == -1:
+			return
 
-			dataName = []
-			self.dataSNR[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.EsEb)
+		self.dataName[pathId] = []
+		dataName = []
+		self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType[self.NoiseTypeIdx])
 
-			if not self.dataName[pathId]:
-				if not dataName:
-					self.dataName[pathId] = "Curve " + str(pathId)
-				elif dataName in self.dataName:
-					self.dataName[pathId] = dataName + "_" + str(pathId)
-				else:
-					self.dataName[pathId] = dataName
+		if not dataName:
+			self.dataName[pathId] = "Curve " + str(pathId)
+		elif dataName in self.dataName:
+			self.dataName[pathId] = dataName + "_" + str(pathId)
+		else:
+			self.dataName[pathId] = dataName
 
-	def plotCurve(self, pathId, dataSNR, dataBER, dataFER, dataBEFE, dataThr):
-		icolor = self.colors[pathId % len(self.colors)]
-		pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
-		pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
-
-		self.removeLegendItem(self.dataName[pathId])
-
-		self.wBER. plot(x=dataSNR, y=dataBER,  pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wFER. plot(x=dataSNR, y=dataFER,  pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wBEFE.plot(x=dataSNR, y=dataBEFE, pen=pen, symbol='x', name=self.dataName[pathId])
-		self.wThr. plot(x=dataSNR, y=dataThr,  pen=pen, symbol='x', name=self.dataName[pathId])
-
-	def updateCurve(self, path):
-		if path in self.paths:
-			pathId = self.getPathId(path)
-
-			if self.dataSNR[pathId]:
-				if self.dataSNR[pathId][len(self.dataSNR[pathId]) -1] > self.lastSNR[pathId]:
-					curDataSNR  = list(self.dataSNR [pathId]) # make a copy
-					curDataBER  = list(self.dataBER [pathId]) # make a copy
-					curDataFER  = list(self.dataFER [pathId]) # make a copy
-					curDataThr  = list(self.dataThr [pathId]) # make a copy
-					curDataBEFE = list(self.dataBEFE[pathId]) # make a copy
-
-					nPop = 0
-					for i in range(len(curDataSNR)):
-						if self.lastSNR[pathId] >= curDataSNR[i]:
-							nPop = i
-
-					for i in range(nPop):
-						curDataSNR .pop(0)
-						curDataBER .pop(0)
-						curDataFER .pop(0)
-						curDataBEFE.pop(0)
-						curDataThr .pop(0)
-
-					self.plotCurve(pathId, curDataSNR, curDataBER, curDataFER, curDataBEFE, curDataThr)
-					self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
-				elif self.dataSNR[pathId][len(self.dataSNR[pathId]) -1] < self.lastSNR[pathId]:
-					self.updateCurves()
-					self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
-			else:
-				self.updateCurves()
-				self.lastSNR[pathId] = -999.0
+		if len(self.dataNoise[pathId]) == 0:
+			self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
+			self.lastSNR[pathId] = -999.0
+		else:
+			self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
 
 	def updateCurves(self):
 		self.wBER .clearPlots()
@@ -219,12 +230,23 @@ class AdvTreeView(QtGui.QTreeView):
 		self.wBEFE.clearPlots()
 		self.wThr .clearPlots()
 
+		# plot the curves
 		for pathId in range(len(self.paths)):
-			self.plotCurve(pathId, self.dataSNR[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId])
+			icolor = self.colors[pathId % len(self.colors)]
+			pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
+			pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
+
+			self.removeLegendItem(self.dataName[pathId])
+
+			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wBEFE.plot(x=self.dataNoise[pathId], y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			self.wThr. plot(x=self.dataNoise[pathId], y=self.dataThr [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
 
 	def updateDataAndCurve(self, path):
-		self.updateData(path)
-		self.updateCurve(path)
+		if (self.refreshing_time + 0.1) < time.time(): # timer to not freeze because of several refreshes asked at the same time
+			self.refresh()
+			self.refreshing_time = time.time()
 
 	def updateDetails(self):
 		self.wDeta.clear()
@@ -280,23 +302,6 @@ class AdvTreeView(QtGui.QTreeView):
 		newPaths = [ self.model().filePath(index) for index in self.selectedIndexes()
 		                if not self.model().isDir(index)] # TODO: remove this restriction
 
-		self.dataSNR  = [0 for x in range(len(newPaths))]
-		self.dataBER  = [0 for x in range(len(newPaths))]
-		self.dataFER  = [0 for x in range(len(newPaths))]
-		self.dataBEFE = [0 for x in range(len(newPaths))]
-		self.dataThr  = [0 for x in range(len(newPaths))]
-		self.dataDeta = [0 for x in range(len(newPaths))]
-		self.lastSNR  = [0 for x in range(len(newPaths))]
-
-		for name in self.dataName:
-			self.removeLegendItem(name)
-		self.dataName = [0 for x in range(len(newPaths))]
-
-		if not len(newPaths):
-			self.hideLegend()
-		else:
-			self.showLegend()
-
 		pathsToRemove = []
 		for p in self.paths:
 			if p not in newPaths:
@@ -318,17 +323,38 @@ class AdvTreeView(QtGui.QTreeView):
 		if len(pathsToAdd) > 0:
 			self.fsWatcher.addPaths(pathsToAdd)
 
-		for path in self.paths:
-			self.updateData(path)
+		self.refresh ()
+		self.setLabel()
 
-		for pathId in range(len(self.paths)):
-			if len(self.dataSNR[pathId]) > 0:
-				self.lastSNR[pathId] = self.dataSNR[pathId][len(self.dataSNR[pathId]) -1]
-			else:
-				self.lastSNR[pathId] = -999.0
+		if not self.NoiseSelectedByUser:
+			self.autoSelectNoise()
 
-		self.updateCurves()
-		self.updateDetails()
+	def autoSelectNoise(self):
+		save = self.NoiseTypeIdx
+
+		found = False
+
+		for i in range(len(self.NoiseType)):
+			self.NoiseTypeIdx = i
+			self.refresh()
+
+			for n in self.dataNoise:
+				if len(n) > 0:
+					found = True
+					break;
+
+			if found:
+				self.setLabel()
+				break;
+
+		if not found:
+			self.NoiseTypeIdx = save
+			self.refresh ()
+			self.setLabel()
+
+		self.NoiseSelectedByUser = False
+
+
 
 def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	if len(sys.argv) >= 2:

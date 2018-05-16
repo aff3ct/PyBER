@@ -21,67 +21,49 @@
 # SOFTWARE.
 
 import os
+import numpy as np
 
-def getVal(line, idColumn, EsEb):
-	# there are two different file formats, classic (lines begni with SNR) and new (lines begin with SNR value directly)
-	# indices of the different parameter change, and the following array is used to convert classic indices to new
-	convert_to_v1 = [0, 4, 5, 12, 0, 3, 2]
-	convert_to_v2 = [0, 4, 5, 9 , 0, 3, 2]
-	convert_to_v3 = [0, 4, 5, 6 , 0, 3, 2]
+def getLegend(line):
+	line = line.replace("#", "")
+	line = line.replace("||", "|")
+	line = line.split('|')
+	for i in range(len(line)):
+		line[i] = line[i].strip()
 
-	if (EsEb == "Es"):
-		convert_to_v4 = [0, 5, 6, 10, 1, 4, 3]
-		convert_to_v5 = [0, 5, 6, 7 , 1, 4, 3]
-	else:
-		convert_to_v4 = [1, 5, 6, 10, 1, 4, 3]
-		convert_to_v5 = [1, 5, 6, 7 , 1, 4, 3]
+	return line
 
-	# classic
-	if line.startswith("SNR = "):
-		line = line.replace("#", "")
-		line = line.replace("=", "")
-		line = line.replace("SNR", "")
-		line = line.replace("BER", "")
-		line = line.replace("FER", "")
-		line = line.replace("BE/FE", "")
-		line = line.replace("BPS", "")
-		line = line.replace("BPS", "")
-		line = line.replace("MATRICES", "")
-		line = line.replace("BE", "")
-		line = line.replace("FE", "")
-		line = line.replace("RUNTIME", "")
-		line = line.replace("ERR", "")
-		line = line.replace(" ", "")
-		line = line.split('|')
 
-		val = float(line[idColumn])
-	# new
-	else:
-		line = line.replace("||", "|")
-		line = line.split('|')
+def getVal(line):
+	line = line.replace("#", "")
+	line = line.replace("||", "|")
+	line = line.split('|')
 
-		try:
-			float(line[0])  # in cases where the first item of the line is neither "SNR = " nor a float
-		except ValueError:
-			return float(-999.0)
-
-		if(len(line) == 14):
-			val = float(line[convert_to_v1[idColumn]])
-		elif(len(line) == 11):
-			val = float(line[convert_to_v2[idColumn]])
-		elif(len(line) == 8):
-			val = float(line[convert_to_v3[idColumn]])
-		elif(len(line) == 12):
-			val = float(line[convert_to_v4[idColumn]])
-		elif(len(line) == 9):
-			val = float(line[convert_to_v5[idColumn]])
-
-	if "inf" in str(val):
+	valLine = []
+	for i in range(len(line)):
 		val = float(0.0)
 
-	return val
+		try:
+			val = float(line[i])
 
-def dataReader(filename, EsEb):
+			if "inf" in str(val):
+				val = float(0.0)
+
+		except ValueError:
+			pass
+
+		valLine.append(val)
+
+	return valLine
+
+
+def getLegendIdx(legend, colName):
+	for i in range(len(legend)):
+		if legend[i] == colName:
+			return i
+	return -1
+
+
+def dataReader(filename, NoiseType):
 	# read all the lines from the current file
 	aFile = open(filename, "r")
 	lines = []
@@ -89,13 +71,15 @@ def dataReader(filename, EsEb):
 		lines.append(line)
 	aFile.close()
 
-	dataSNR  = []
-	dataBER  = []
-	dataFER  = []
-	dataBEFE = []
-	dataThr  = []
-	dataDeta = []
-	dataName = []
+	legend    = []
+	data      = []
+	dataNoise = []
+	dataBER   = []
+	dataFER   = []
+	dataBEFE  = []
+	dataThr   = []
+	dataDeta  = []
+	dataName  = []
 
 	for line in lines:
 		if line.startswith("#"):
@@ -104,49 +88,94 @@ def dataReader(filename, EsEb):
 				if len(entry) == 1:
 					entry[0] = entry[0].replace("-", "")
 				dataDeta.append(entry)
+
 			elif len(line) > 7 and line[0] == '#' and line[5] == '*' and line[6] == '*':
 				entry = line.replace("#    ** ", "").replace("\n", "").split(" = ")
 				dataDeta.append(entry)
+
 			elif len(line) > 6 and line[0] == '#' and line[1] == ' ' and line[2] == ' ' and line[3] == ' ' and line[4] == ' ' and line[5] != ' ' and line[5] != '*':
 				entry = line.replace("#    ", "*").replace("\n", "").split(" = ")
 				if len(entry) == 1:
 					entry[0] = entry[0].replace("-", "")
 				dataDeta.append(entry)
+
+			elif len(line) > 20 and (line.find("FRA |") != -1 or line.find("BER |") != -1 or line.find("FER |") != -1):
+				legend = getLegend(line)
+
 		else:
-			snr = getVal(line, 0, EsEb)
-			if snr == -999.0:
-				continue # line is ignored
+			if len(legend) != 0:
+				d = getVal(line)
+				if len(d) == len(legend):
+					data.append(d)
 
-			dataSNR.append(snr)
-			dataBER.append(getVal(line, 1, EsEb))
-			dataFER.append(getVal(line, 2, EsEb))
-			dataThr.append(getVal(line, 3, EsEb))
 
-			be = getVal(line, 6, EsEb)
-			fe = getVal(line, 5, EsEb)
-
-			if fe == 0:
-				dataBEFE.append(0.0)
-			else :
-				dataBEFE.append(be/fe)
+	data = np.array(data).transpose()
 
 	dataDeta.append(["Other"])
 	dataDeta.append(["File name", os.path.basename(filename)])
 
 	# get the command to to run to reproduce this trace
-	if lines and "Run command:" in lines[0]:
+	if len(lines) >= 2 and "Run command:" in lines[0]:
 		dataDeta.append(["Run command", str(lines[1].strip())])
-	else:
-		dataDeta.append(["Run command", ""])
-	if lines and "Run command:" in lines[2]:
+	elif len(lines) >= 4 and "Run command:" in lines[2]:
 		dataDeta.append(["Run command", str(lines[3].strip())])
 	else:
 		dataDeta.append(["Run command", ""])
 
-	# get the curve name (is there is one)
-	if lines and "Curve name:" in lines[0]:
+	# get the curve name (if there is one)
+	if len(lines) >= 2 and "Curve name:" in lines[0]:
 		dataName = str(lines[1].strip())
-	if lines and "Curve name:" in lines[2]:
+	elif len(lines) >= 4 and "Curve name:" in lines[2]:
 		dataName = str(lines[3].strip())
+	else:
+		dataName = ""
 
-	return dataSNR, dataBER, dataFER, dataBEFE, dataThr, dataDeta, dataName
+	idx = getLegendIdx(legend, NoiseType)
+
+	if len(data) and idx != -1 :
+		# set noise range
+		dataNoise = data[idx]
+
+		# set BER
+		idx = getLegendIdx(legend, "BER")
+		if idx == -1:
+			dataBER = [0 for x in range(len(dataNoise))]
+		else:
+			dataBER = data[idx]
+
+		# set FER
+		idx = getLegendIdx(legend, "FER")
+		if idx == -1:
+			dataFER = [0 for x in range(len(dataNoise))]
+		else:
+			dataFER = data[idx]
+
+		# set BE/FE
+		idx = getLegendIdx(legend, "BE")
+		if idx == -1:
+			dataBE = [0 for x in range(len(dataNoise))]
+		else:
+			dataBE = data[idx]
+
+		idx = getLegendIdx(legend, "FE")
+		if idx == -1:
+			dataFE = [1 for x in range(len(dataNoise))]
+		else:
+			dataFE = data[idx]
+
+		dataBEFE = [0 for x in range(len(dataNoise))]
+
+		for i in range(len(dataBEFE)):
+			if dataFE[i] == float(0):
+				dataBEFE[i] = float(0)
+			else:
+				dataBEFE[i] = dataBE[i]/dataFE[i]
+
+		# set Througput
+		idx = getLegendIdx(legend, "SIM_THR")
+		if idx == -1:
+			dataThr = [0 for x in range(len(dataNoise))]
+		else:
+			dataThr = data[idx]
+
+	return dataNoise, dataBER, dataFER, dataBEFE, dataThr, dataDeta, dataName
