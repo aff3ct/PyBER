@@ -63,6 +63,14 @@ def getLegendIdx(legend, colName):
 	return -1
 
 
+def findLine(stringArray, string):
+	for i in range(len(stringArray)):
+		if string in stringArray[i]:
+			return i
+
+	return -1
+
+
 def dataReader(filename, NoiseType):
 	# read all the lines from the current file
 	aFile = open(filename, "r")
@@ -114,21 +122,20 @@ def dataReader(filename, NoiseType):
 	dataDeta.append(["Other"])
 	dataDeta.append(["File name", os.path.basename(filename)])
 
-	# get the command to to run to reproduce this trace
-	if len(lines) >= 2 and "Run command:" in lines[0]:
-		dataDeta.append(["Run command", str(lines[1].strip())])
-	elif len(lines) >= 4 and "Run command:" in lines[2]:
-		dataDeta.append(["Run command", str(lines[3].strip())])
+	# get the command to reproduce this trace
+	idx = findLine(lines, "Run command:")
+	if idx != -1 and len(lines) >= idx +1:
+		dataDeta.append(["Run command", str(lines[idx +1].strip())])
 	else:
 		dataDeta.append(["Run command", ""])
 
 	# get the curve name (if there is one)
-	if len(lines) >= 2 and "Curve name:" in lines[0]:
-		dataName = str(lines[1].strip())
-	elif len(lines) >= 4 and "Curve name:" in lines[2]:
-		dataName = str(lines[3].strip())
+	idx = findLine(lines, "Curve name:")
+	if idx != -1 and len(lines) >= idx +1:
+		dataName = str(lines[idx +1].strip())
 	else:
 		dataName = ""
+
 
 	idx = getLegendIdx(legend, NoiseType)
 
