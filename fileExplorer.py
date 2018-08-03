@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2016 PyBER
+# Copyright (c) 2018 PyBER
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import sys
+import os
+from data.refs.aff3ct_refs_reader import aff3ctRefsReader
 import reader
 import subprocess
 import time
@@ -50,7 +51,7 @@ class AdvTreeView(QtGui.QTreeView):
 	dataFER    = []
 	dataBEFE   = []
 	dataThr    = []
-	dataDeta   = []
+	dataHeader = []
 	dataName   = []
 
 	#                     1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
@@ -60,7 +61,7 @@ class AdvTreeView(QtGui.QTreeView):
 	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
 	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
 
-	NoiseType          = ["Eb/N0",       "Es/N0",       "MI",          "ROP",                         "EP"               ]
+	NoiseType          = ["ebn0",        "esn0",        "mi",          "rop",                         "ep"               ]
 	NoiseTypeLabel     = ["Eb/N0 (dB)",  "Es/N0 (dB)",  "Mutual Info", "Received Optical Power (dB)", "Event Probability"]
 	BERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
 	FERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
@@ -134,7 +135,7 @@ class AdvTreeView(QtGui.QTreeView):
 		self.dataFER   = [[] for x in range(len(self.paths))]
 		self.dataBEFE  = [[] for x in range(len(self.paths))]
 		self.dataThr   = [[] for x in range(len(self.paths))]
-		self.dataDeta  = [[] for x in range(len(self.paths))]
+		self.dataHeader= [[] for x in range(len(self.paths))]
 		self.lastSNR   = [[] for x in range(len(self.paths))]
 
 		for path in self.paths:
@@ -207,9 +208,19 @@ class AdvTreeView(QtGui.QTreeView):
 		if pathId == -1:
 			return
 
-		self.dataName[pathId] = []
-		dataName = []
-		self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType[self.NoiseTypeIdx])
+		refs = aff3ctRefsReader(path)
+
+		noiseKey = self.NoiseType[self.NoiseTypeIdx]
+		if noiseKey in refs.Trace:
+			self.dataNoise [pathId] = refs.Trace[noiseKey]
+			self.dataBER   [pathId] = refs.Trace["be_rate"]
+			self.dataFER   [pathId] = refs.Trace["fe_rate"]
+			self.dataBEFE  [pathId] = [b/f for b,f in zip(refs.Trace["n_be"], refs.Trace["n_fe"])]
+			self.dataThr   [pathId] = refs.Trace["sim_thr"]
+			self.dataHeader[pathId] = refs.SimuHeader
+		else:
+			self.dataNoise[pathId] = []
+		dataName = refs.Metadata["title"]
 
 		if not dataName:
 			self.dataName[pathId] = "Curve " + str(pathId)
@@ -237,6 +248,7 @@ class AdvTreeView(QtGui.QTreeView):
 			pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
 
 			self.removeLegendItem(self.dataName[pathId])
+
 
 			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
 			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
@@ -266,7 +278,7 @@ class AdvTreeView(QtGui.QTreeView):
 
 			firstTitle   = True;
 			layoutLegend = QtGui.QFormLayout()
-			for entry in self.dataDeta[pathId]:
+			for entry in self.dataHeader[pathId]:
 				if len(entry) == 2 and entry[1]:
 					if entry[0] == "Run command":
 						runCmd = QtGui.QLineEdit(str(entry[1]))
