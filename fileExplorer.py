@@ -45,14 +45,16 @@ class AdvTreeView(QtGui.QTreeView):
 
 	NoiseTypeIdx = []
 
-	dataNoise  = []
-	dataBER    = []
-	dataFER    = []
-	dataBEFE   = []
-	dataThr    = []
-	dataHeader = []
-	dataMeta   = []
-	dataName   = []
+	Traces   = []
+	dataBEFE = []
+	dataName = []
+
+	# dataNoise  = []
+	# dataBER    = []
+	# dataFER    = []
+	# dataThr    = []
+	# dataHeader = []
+	# dataMeta   = []
 
 	#                     1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
 	colors             = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
@@ -129,15 +131,9 @@ class AdvTreeView(QtGui.QTreeView):
 		for name in self.dataName:
 			self.removeLegendItem(name)
 
-		self.dataName   = [[] for x in range(len(self.paths))]
-		self.dataNoise  = [[] for x in range(len(self.paths))]
-		self.dataBER    = [[] for x in range(len(self.paths))]
-		self.dataFER    = [[] for x in range(len(self.paths))]
-		self.dataBEFE   = [[] for x in range(len(self.paths))]
-		self.dataThr    = [[] for x in range(len(self.paths))]
-		self.dataHeader = [[] for x in range(len(self.paths))]
-		self.dataMeta   = [[] for x in range(len(self.paths))]
-		self.lastNoise  = [[] for x in range(len(self.paths))]
+		self.Traces   = [[] for x in range(len(self.paths))]
+		self.dataBEFE = [[] for x in range(len(self.paths))]
+		self.dataName = [[] for x in range(len(self.paths))]
 
 		for path in self.paths:
 			self.updateData(path)
@@ -209,20 +205,10 @@ class AdvTreeView(QtGui.QTreeView):
 		if pathId == -1:
 			return
 
-		refs = aff3ctRefsReader(path)
+		self.Traces  [pathId] = aff3ctRefsReader(path)
+		self.dataBEFE[pathId] = [b/f for b,f in zip(self.Traces[pathId].Trace["n_be"], self.Traces[pathId].Trace["n_fe"])]
 
-		noiseKey = self.NoiseType[self.NoiseTypeIdx]
-		if noiseKey in refs.Trace:
-			self.dataNoise [pathId] = refs.Trace[noiseKey]
-			self.dataBER   [pathId] = refs.Trace["be_rate"]
-			self.dataFER   [pathId] = refs.Trace["fe_rate"]
-			self.dataBEFE  [pathId] = [b/f for b,f in zip(refs.Trace["n_be"], refs.Trace["n_fe"])]
-			self.dataThr   [pathId] = refs.Trace["sim_thr"]
-			self.dataHeader[pathId] = refs.SimuHeader
-			self.dataMeta  [pathId] = refs.Metadata
-		else:
-			self.dataNoise[pathId] = []
-		dataName = refs.Metadata["title"]
+		dataName = self.Traces[pathId].Metadata["title"]
 
 		if not dataName:
 			self.dataName[pathId] = "Curve " + str(pathId)
@@ -231,11 +217,8 @@ class AdvTreeView(QtGui.QTreeView):
 		else:
 			self.dataName[pathId] = dataName
 
-		if len(self.dataNoise[pathId]) == 0:
-			self.dataName [pathId] = "**" + self.dataName[pathId] + "**"
-			self.lastNoise[pathId] = -999.0
-		else:
-			self.lastNoise[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
+		if not self.Traces[pathId].legendKeyAvailable(self.NoiseType[self.NoiseTypeIdx]):
+			self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
 
 	def updateCurves(self):
 		self.wBER .clearPlots()
@@ -249,13 +232,21 @@ class AdvTreeView(QtGui.QTreeView):
 			pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
 			pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
 
+
 			self.removeLegendItem(self.dataName[pathId])
 
+			noiseKey = self.NoiseType[self.NoiseTypeIdx]
 
-			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wBEFE.plot(x=self.dataNoise[pathId], y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wThr. plot(x=self.dataNoise[pathId], y=self.dataThr [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			if self.Traces[pathId].legendKeyAvailable(noiseKey):
+				self.wBER. plot(x=self.Traces[pathId].Trace[noiseKey], y=self.Traces[pathId].Trace["be_rate"], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wFER. plot(x=self.Traces[pathId].Trace[noiseKey], y=self.Traces[pathId].Trace["fe_rate"], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wBEFE.plot(x=self.Traces[pathId].Trace[noiseKey], y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wThr. plot(x=self.Traces[pathId].Trace[noiseKey], y=self.Traces[pathId].Trace["sim_thr"], pen=pen, symbol='x', name=self.dataName[pathId])
+			else:
+				self.wBER. plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wFER. plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wBEFE.plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wThr. plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
 
 	def updateDataAndCurve(self, path):
 		if (self.refreshing_time + 0.1) < time.time(): # timer to not freeze because of several refreshes asked at the same time
@@ -280,7 +271,7 @@ class AdvTreeView(QtGui.QTreeView):
 
 			firstTitle   = True;
 			layoutLegend = QtGui.QFormLayout()
-			for entry in self.dataHeader[pathId]:
+			for entry in self.Traces[pathId].SimuHeader:
 				if len(entry) == 2 and entry[1]:
 					if entry[0] == "Run command":
 						runCmd = QtGui.QLineEdit(str(entry[1]))
@@ -309,8 +300,8 @@ class AdvTreeView(QtGui.QTreeView):
 			layoutLegend.addRow(line)
 			layoutLegend.addRow("<h3><u>Metadata<u></h3>", QtGui.QLabel(""))
 
-			for entry in self.dataMeta[pathId]:
-				lineEdit = QtGui.QLineEdit(str(self.dataMeta[pathId][entry]))
+			for entry in self.Traces[pathId].Metadata:
+				lineEdit = QtGui.QLineEdit(str(self.Traces[pathId].Metadata[entry]))
 				lineEdit.setReadOnly(True)
 				layoutLegend.addRow("<b>" + entry + "</b>: ", lineEdit)
 
@@ -366,8 +357,10 @@ class AdvTreeView(QtGui.QTreeView):
 			self.NoiseTypeIdx = i
 			self.refresh()
 
-			for n in self.dataNoise:
-				if len(n) > 0:
+			noiseKey = self.NoiseType[self.NoiseTypeIdx]
+
+			for t in self.Traces:
+				if t.legendKeyAvailable(noiseKey):
 					found = True
 					break;
 
