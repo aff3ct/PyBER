@@ -23,7 +23,6 @@
 import sys
 import os
 from data.refs.aff3ct_refs_reader import aff3ctRefsReader
-import reader
 import subprocess
 import time
 import lib.pyqtgraph.pyqtgraph as pg
@@ -52,11 +51,12 @@ class AdvTreeView(QtGui.QTreeView):
 	dataBEFE   = []
 	dataThr    = []
 	dataHeader = []
+	dataMeta   = []
 	dataName   = []
 
 	#                     1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
 	colors             = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
-	lastSNR            = []
+	lastNoise          = []
 	paths              = []
 	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
 	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
@@ -129,14 +129,15 @@ class AdvTreeView(QtGui.QTreeView):
 		for name in self.dataName:
 			self.removeLegendItem(name)
 
-		self.dataName  = [[] for x in range(len(self.paths))]
-		self.dataNoise = [[] for x in range(len(self.paths))]
-		self.dataBER   = [[] for x in range(len(self.paths))]
-		self.dataFER   = [[] for x in range(len(self.paths))]
-		self.dataBEFE  = [[] for x in range(len(self.paths))]
-		self.dataThr   = [[] for x in range(len(self.paths))]
-		self.dataHeader= [[] for x in range(len(self.paths))]
-		self.lastSNR   = [[] for x in range(len(self.paths))]
+		self.dataName   = [[] for x in range(len(self.paths))]
+		self.dataNoise  = [[] for x in range(len(self.paths))]
+		self.dataBER    = [[] for x in range(len(self.paths))]
+		self.dataFER    = [[] for x in range(len(self.paths))]
+		self.dataBEFE   = [[] for x in range(len(self.paths))]
+		self.dataThr    = [[] for x in range(len(self.paths))]
+		self.dataHeader = [[] for x in range(len(self.paths))]
+		self.dataMeta   = [[] for x in range(len(self.paths))]
+		self.lastNoise  = [[] for x in range(len(self.paths))]
 
 		for path in self.paths:
 			self.updateData(path)
@@ -218,6 +219,7 @@ class AdvTreeView(QtGui.QTreeView):
 			self.dataBEFE  [pathId] = [b/f for b,f in zip(refs.Trace["n_be"], refs.Trace["n_fe"])]
 			self.dataThr   [pathId] = refs.Trace["sim_thr"]
 			self.dataHeader[pathId] = refs.SimuHeader
+			self.dataMeta  [pathId] = refs.Metadata
 		else:
 			self.dataNoise[pathId] = []
 		dataName = refs.Metadata["title"]
@@ -230,10 +232,10 @@ class AdvTreeView(QtGui.QTreeView):
 			self.dataName[pathId] = dataName
 
 		if len(self.dataNoise[pathId]) == 0:
-			self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
-			self.lastSNR[pathId] = -999.0
+			self.dataName [pathId] = "**" + self.dataName[pathId] + "**"
+			self.lastNoise[pathId] = -999.0
 		else:
-			self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
+			self.lastNoise[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
 
 	def updateCurves(self):
 		self.wBER .clearPlots()
@@ -298,6 +300,20 @@ class AdvTreeView(QtGui.QTreeView):
 							layoutLegend.addRow(line)
 						firstTitle = False
 						layoutLegend.addRow("<h3><u>" + entry[0] + "<u></h3>", QtGui.QLabel(""))
+
+
+			# Add an horizontal line to seperate
+			line = QtGui.QFrame()
+			line.setFrameShape(QtGui.QFrame.HLine)
+			line.setFrameShadow(QtGui.QFrame.Plain)
+			layoutLegend.addRow(line)
+			layoutLegend.addRow("<h3><u>Metadata<u></h3>", QtGui.QLabel(""))
+
+			for entry in self.dataMeta[pathId]:
+				lineEdit = QtGui.QLineEdit(str(self.dataMeta[pathId][entry]))
+				lineEdit.setReadOnly(True)
+				layoutLegend.addRow("<b>" + entry + "</b>: ", lineEdit)
+
 
 			wCur = QtGui.QWidget();
 			wCur.setLayout(layoutLegend)
