@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2016 PyBER
+# Copyright (c) 2018 PyBER
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import sys
-import reader
+import os
+from data.refs.aff3ct_refs_reader import aff3ctRefsReader
 import subprocess
 import time
 import lib.pyqtgraph.pyqtgraph as pg
 from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
 from lib.pyqtgraph.pyqtgraph.dockarea import *
 import numpy as np
+
 
 class AdvTreeView(QtGui.QTreeView):
 	wBER      = []
@@ -45,22 +46,18 @@ class AdvTreeView(QtGui.QTreeView):
 
 	NoiseTypeIdx = []
 
-	dataNoise  = []
-	dataBER    = []
-	dataFER    = []
-	dataBEFE   = []
-	dataThr    = []
-	dataDeta   = []
-	dataName   = []
+	Curves   = []
+	dataBEFE = []
+	dataName = []
 
 	#                     1  2  3  4  5  6  7  8  9  10  11  12  13  14  15, 16
 	colors             = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17]
-	lastSNR            = []
+	lastNoise          = []
 	paths              = []
 	styles             = [QtCore.Qt.SolidLine, QtCore.Qt.DashLine, QtCore.Qt.DotLine, QtCore.Qt.DashDotLine, QtCore.Qt.DashDotDotLine]
 	dashPatterns       = [[1, 3, 4, 3], [2, 3, 4, 3], [1, 3, 1, 3], [4, 3, 4, 3], [3, 3, 2, 3], [4, 3, 1, 3]]
 
-	NoiseType          = ["Eb/N0",       "Es/N0",       "MI",          "ROP",                         "EP"               ]
+	NoiseType          = ["ebn0",        "esn0",        "mi",          "rop",                         "ep"               ]
 	NoiseTypeLabel     = ["Eb/N0 (dB)",  "Es/N0 (dB)",  "Mutual Info", "Received Optical Power (dB)", "Event Probability"]
 	BERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
 	FERLegendPosition  = ["BottomLeft",  "BottomLeft",  "BottomLeft",  "BottomLeft",                  "BottomRight"      ]
@@ -128,14 +125,9 @@ class AdvTreeView(QtGui.QTreeView):
 		for name in self.dataName:
 			self.removeLegendItem(name)
 
-		self.dataName  = [[] for x in range(len(self.paths))]
-		self.dataNoise = [[] for x in range(len(self.paths))]
-		self.dataBER   = [[] for x in range(len(self.paths))]
-		self.dataFER   = [[] for x in range(len(self.paths))]
-		self.dataBEFE  = [[] for x in range(len(self.paths))]
-		self.dataThr   = [[] for x in range(len(self.paths))]
-		self.dataDeta  = [[] for x in range(len(self.paths))]
-		self.lastSNR   = [[] for x in range(len(self.paths))]
+		self.Curves   = [[] for x in range(len(self.paths))]
+		self.dataBEFE = [[] for x in range(len(self.paths))]
+		self.dataName = [[] for x in range(len(self.paths))]
 
 		for path in self.paths:
 			self.updateData(path)
@@ -207,9 +199,10 @@ class AdvTreeView(QtGui.QTreeView):
 		if pathId == -1:
 			return
 
-		self.dataName[pathId] = []
-		dataName = []
-		self.dataNoise[pathId], self.dataBER[pathId], self.dataFER[pathId], self.dataBEFE[pathId], self.dataThr[pathId], self.dataDeta[pathId], dataName = reader.dataReader(path, self.NoiseType[self.NoiseTypeIdx])
+		self.Curves  [pathId] = aff3ctRefsReader(path)
+		self.dataBEFE[pathId] = [b/f for b,f in zip(self.Curves[pathId].getTrace("n_be"), self.Curves[pathId].getTrace("n_fe"))]
+
+		dataName = self.Curves[pathId].getMetadata("title")
 
 		if not dataName:
 			self.dataName[pathId] = "Curve " + str(pathId)
@@ -218,11 +211,8 @@ class AdvTreeView(QtGui.QTreeView):
 		else:
 			self.dataName[pathId] = dataName
 
-		if len(self.dataNoise[pathId]) == 0:
+		if not self.Curves[pathId].legendKeyAvailable(self.NoiseType[self.NoiseTypeIdx]):
 			self.dataName[pathId] = "**" + self.dataName[pathId] + "**"
-			self.lastSNR[pathId] = -999.0
-		else:
-			self.lastSNR[pathId] = self.dataNoise[pathId][len(self.dataNoise[pathId]) -1]
 
 	def updateCurves(self):
 		self.wBER .clearPlots()
@@ -236,12 +226,21 @@ class AdvTreeView(QtGui.QTreeView):
 			pen = pg.mkPen(color=(icolor,8), width=2, style=QtCore.Qt.CustomDashLine)
 			pen.setDashPattern(self.dashPatterns[pathId % len(self.dashPatterns)])
 
+
 			self.removeLegendItem(self.dataName[pathId])
 
-			self.wBER. plot(x=self.dataNoise[pathId], y=self.dataBER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wFER. plot(x=self.dataNoise[pathId], y=self.dataFER [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wBEFE.plot(x=self.dataNoise[pathId], y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
-			self.wThr. plot(x=self.dataNoise[pathId], y=self.dataThr [pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+			noiseKey = self.NoiseType[self.NoiseTypeIdx]
+
+			if self.Curves[pathId].legendKeyAvailable(noiseKey):
+				self.wBER. plot(x=self.Curves[pathId].getTrace(noiseKey), y=self.Curves[pathId].getTrace("be_rate"), pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wFER. plot(x=self.Curves[pathId].getTrace(noiseKey), y=self.Curves[pathId].getTrace("fe_rate"), pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wBEFE.plot(x=self.Curves[pathId].getTrace(noiseKey), y=self.dataBEFE[pathId], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wThr. plot(x=self.Curves[pathId].getTrace(noiseKey), y=self.Curves[pathId].getTrace("sim_thr"), pen=pen, symbol='x', name=self.dataName[pathId])
+			else:
+				self.wBER. plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wFER. plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wBEFE.plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
+				self.wThr. plot(x=[], y=[], pen=pen, symbol='x', name=self.dataName[pathId])
 
 	def updateDataAndCurve(self, path):
 		if (self.refreshing_time + 0.1) < time.time(): # timer to not freeze because of several refreshes asked at the same time
@@ -266,7 +265,7 @@ class AdvTreeView(QtGui.QTreeView):
 
 			firstTitle   = True;
 			layoutLegend = QtGui.QFormLayout()
-			for entry in self.dataDeta[pathId]:
+			for entry in self.Curves[pathId].SimuHeader:
 				if len(entry) == 2 and entry[1]:
 					if entry[0] == "Run command":
 						runCmd = QtGui.QLineEdit(str(entry[1]))
@@ -287,7 +286,36 @@ class AdvTreeView(QtGui.QTreeView):
 						firstTitle = False
 						layoutLegend.addRow("<h3><u>" + entry[0] + "<u></h3>", QtGui.QLabel(""))
 
-			wCur = QtGui.QWidget();
+
+			# Add an horizontal line to seperate
+			line = QtGui.QFrame()
+			line.setFrameShape(QtGui.QFrame.HLine)
+			line.setFrameShadow(QtGui.QFrame.Plain)
+			layoutLegend.addRow(line)
+			layoutLegend.addRow("<h3><u>Metadata<u></h3>", QtGui.QLabel(""))
+
+			for entry in self.Curves[pathId].Metadata:
+				if entry == "doi":
+					url = QtGui.QLineEdit("https://doi.org/" + self.Curves[pathId].Metadata[entry])
+					url.setReadOnly(True)
+					layoutLegend.addRow("<b>" + entry + "</b>: ", url)
+				# if entry == "url":
+				# 	url = QtGui.QLabel(str(self.Curves[pathId].Metadata[entry]))
+				# 	url.setOpenExternalLinks(True)
+				# 	url.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse | QtCore.Qt.TextSelectableByMouse)
+				# 	layoutLegend.addRow("<b>" + entry + "</b>: ", url)
+				# elif entry == "filename":
+				# 	url = QtGui.QLabel(str(self.Curves[pathId].Metadata[entry]))
+				# 	url.setOpenInternalLinks(True)
+				# 	url.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse | QtCore.Qt.TextSelectableByMouse)
+				# 	layoutLegend.addRow("<b>" + entry + "</b>: ", url)
+				else:
+					lineEdit = QtGui.QLineEdit(self.Curves[pathId].Metadata[entry])
+					lineEdit.setReadOnly(True)
+					layoutLegend.addRow("<b>" + entry + "</b>: ", lineEdit)
+
+
+			wCur = QtGui.QWidget()
 			wCur.setLayout(layoutLegend)
 
 			sCur = QtGui.QScrollArea()
@@ -338,8 +366,10 @@ class AdvTreeView(QtGui.QTreeView):
 			self.NoiseTypeIdx = i
 			self.refresh()
 
-			for n in self.dataNoise:
-				if len(n) > 0:
+			noiseKey = self.NoiseType[self.NoiseTypeIdx]
+
+			for t in self.Curves:
+				if t.legendKeyAvailable(noiseKey):
 					found = True
 					break;
 
