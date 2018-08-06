@@ -30,6 +30,7 @@ from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
 from lib.pyqtgraph.pyqtgraph.dockarea import *
 import numpy as np
 
+
 class AdvTreeView(QtGui.QTreeView):
 	wBER      = []
 	wFER      = []
@@ -301,12 +302,27 @@ class AdvTreeView(QtGui.QTreeView):
 			layoutLegend.addRow("<h3><u>Metadata<u></h3>", QtGui.QLabel(""))
 
 			for entry in self.Traces[pathId].Metadata:
-				lineEdit = QtGui.QLineEdit(str(self.Traces[pathId].Metadata[entry]))
-				lineEdit.setReadOnly(True)
-				layoutLegend.addRow("<b>" + entry + "</b>: ", lineEdit)
+				if entry == "doi":
+					url = QtGui.QLineEdit("https://doi.org/" + self.Traces[pathId].Metadata[entry])
+					url.setReadOnly(True)
+					layoutLegend.addRow("<b>" + entry + "</b>: ", url)
+				# if entry == "url":
+				# 	url = QtGui.QLabel(str(self.Traces[pathId].Metadata[entry]))
+				# 	url.setOpenExternalLinks(True)
+				# 	url.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse | QtCore.Qt.TextSelectableByMouse)
+				# 	layoutLegend.addRow("<b>" + entry + "</b>: ", url)
+				# elif entry == "filename":
+				# 	url = QtGui.QLabel(str(self.Traces[pathId].Metadata[entry]))
+				# 	url.setOpenInternalLinks(True)
+				# 	url.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse | QtCore.Qt.TextSelectableByMouse)
+				# 	layoutLegend.addRow("<b>" + entry + "</b>: ", url)
+				else:
+					lineEdit = QtGui.QLineEdit(self.Traces[pathId].Metadata[entry])
+					lineEdit.setReadOnly(True)
+					layoutLegend.addRow("<b>" + entry + "</b>: ", lineEdit)
 
 
-			wCur = QtGui.QWidget();
+			wCur = QtGui.QWidget()
 			wCur.setLayout(layoutLegend)
 
 			sCur = QtGui.QScrollArea()
