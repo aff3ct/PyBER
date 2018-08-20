@@ -266,18 +266,8 @@ class AdvTreeView(QtGui.QTreeView):
 			firstTitle   = True;
 			layoutLegend = QtGui.QFormLayout()
 			for entry in self.Curves[pathId].SimuHeader:
-				if len(entry) == 2 and entry[1]:
-					if entry[0] == "Run command":
-						runCmd = QtGui.QLineEdit(str(entry[1]))
-						runCmd.setReadOnly(True)
-						layoutLegend.addRow("<b>" + entry[0] + "</b>: ", runCmd)
-					else:
-						layoutLegend.addRow("<b>" + entry[0] + "</b>: ", QtGui.QLabel(entry[1]))
-				elif len(entry) == 1:
-					if len(entry[0]) >= 1 and entry[0][0] == '*':
-						e = entry[0].replace("*", "")
-						layoutLegend.addRow("<b><u>" + e + ":<u></b>", QtGui.QLabel(""))
-					else:
+				if len(entry) == 3 and entry[1]:
+					if entry[2] == 1:
 						if not firstTitle:
 							line = QtGui.QFrame()
 							line.setFrameShape(QtGui.QFrame.HLine)
@@ -285,6 +275,12 @@ class AdvTreeView(QtGui.QTreeView):
 							layoutLegend.addRow(line)
 						firstTitle = False
 						layoutLegend.addRow("<h3><u>" + entry[0] + "<u></h3>", QtGui.QLabel(""))
+
+					elif entry[2] == 2:
+						layoutLegend.addRow("<b><u>" + entry[0] + ":<u></b>", QtGui.QLabel(""))
+
+					elif entry[2] == 3:
+						layoutLegend.addRow("<b>" + entry[0] + "</b>: ", QtGui.QLabel(entry[1]))
 
 
 			# Add an horizontal line to seperate
