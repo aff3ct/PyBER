@@ -22,7 +22,7 @@
 
 import sys
 import os
-from data.refs.aff3ct_refs_reader import aff3ctRefsReader
+from data.refs.readers.aff3ct_trace_reader import aff3ctTraceReader
 import subprocess
 import time
 import lib.pyqtgraph.pyqtgraph as pg
@@ -199,7 +199,7 @@ class AdvTreeView(QtGui.QTreeView):
 		if pathId == -1:
 			return
 
-		self.Curves  [pathId] = aff3ctRefsReader(path)
+		self.Curves  [pathId] = aff3ctTraceReader(path)
 		self.dataBEFE[pathId] = [b/f for b,f in zip(self.Curves[pathId].getTrace("n_be"), self.Curves[pathId].getTrace("n_fe"))]
 
 		dataName = self.Curves[pathId].getMetadata("title")
