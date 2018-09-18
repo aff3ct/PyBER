@@ -404,5 +404,6 @@ def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	view.setRootIndex(model.index(QtCore.QDir.currentPath(), 0))
 	view.setAnimated(True)
 	view.setIconSize(QtCore.QSize(24,24))
+	view.setExpandsOnDoubleClick(False);
 
 	return view
