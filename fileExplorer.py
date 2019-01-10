@@ -26,10 +26,9 @@ from data.refs.readers.aff3ct_trace_reader import aff3ctTraceReader
 import subprocess
 import time
 import lib.pyqtgraph.pyqtgraph as pg
-from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
+from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 from lib.pyqtgraph.pyqtgraph.dockarea import *
 import numpy as np
-
 
 class AdvTreeView(QtGui.QTreeView):
 	wBER      = []
@@ -310,7 +309,6 @@ class AdvTreeView(QtGui.QTreeView):
 					lineEdit.setReadOnly(True)
 					layoutLegend.addRow("<b>" + entry + "</b>: ", lineEdit)
 
-
 			wCur = QtGui.QWidget()
 			wCur.setLayout(layoutLegend)
 
@@ -380,7 +378,39 @@ class AdvTreeView(QtGui.QTreeView):
 
 		self.NoiseSelectedByUser = False
 
+	def selectFolder(self):
+		options = QtWidgets.QFileDialog.Options()
+		# options |= QtWidgets.QFileDialog.DontUseNativeDialog
+		# options |= QtGui.QFileDialog.ShowDirsOnly
+		dirPath = QtWidgets.QFileDialog.getExistingDirectory(self, "Open a folder", "", options=options)
+		if dirPath:
+			oldModel = self.model()
+			model = createFileSystemModel(dirPath)
+			self.setModel(model)
+			self.setRootIndex(model.index(dirPath, 0))
+			del oldModel
 
+class AdvProxyModel(QtCore.QSortFilterProxyModel):
+
+	def __init__(self, parent):
+		super().__init__(parent)
+
+	def filterAcceptsRow(self, source_row, source_parent):
+		super().filterAcceptsRow(source_row, source_parent)
+		print(source_row)
+		print(source_parent)
+
+
+def createFileSystemModel(dirPath):
+	model = QtGui.QFileSystemModel()
+	model.setReadOnly(True)
+	model.setRootPath(dirPath)
+	model.setFilter(QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs | QtCore.QDir.AllEntries | QtCore.QDir.Files)
+	# model.setFilter(proxy)
+	model.setNameFilters(['*.perf', '*.dat', '*.txt', '*.data'])
+	model.setNameFilterDisables(False)
+
+	return model
 
 def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	if len(sys.argv) >= 2:
@@ -388,11 +418,7 @@ def generatePannel(wBER, wFER, wBEFE, wThr, wDeta):
 	else:
 		os.chdir("./data/")
 
-	model = QtGui.QFileSystemModel()
-	model.setReadOnly(True)
-	model.setRootPath(QtCore.QDir.currentPath())
-	model.setNameFilters(['*.perf', '*.dat', '*.txt', '*.data'])
-	model.setNameFilterDisables(False)
+	model = createFileSystemModel(QtCore.QDir.currentPath())
 
 	view = AdvTreeView(wBER, wFER, wBEFE, wThr, wDeta)
 	view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)

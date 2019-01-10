@@ -33,12 +33,12 @@ import fileExplorer
 # pg.setConfigOption('background', 'w')
 # pg.setConfigOption('foreground', 'k')
 
-app  = QtGui.QApplication(['PyBER plotter'])
+app  = QtGui.QApplication(['PyBER Plotter'])
 win  = QtGui.QMainWindow()
 area = DockArea()
 win.setCentralWidget(area)
 win.resize(1280,800)
-win.setWindowTitle('PyBER plotter')
+win.setWindowTitle('PyBER Plotter')
 win.setWindowIcon(QtGui.QIcon('img/woody_ico.png'))
 
 # Create docks, place them into the window one at a time.
@@ -104,23 +104,29 @@ exitAction.setShortcut('Ctrl+Q')
 exitAction.setStatusTip('Exit application')
 exitAction.triggered.connect(lambda: sys.exit(0))
 
+selectFolderAction = QtGui.QAction('&Open Folder', win)
+selectFolderAction.setShortcut('Ctrl+O')
+selectFolderAction.setStatusTip('Open a folder to browse')
+selectFolderAction.triggered.connect(lambda: wFile.selectFolder())
+
 autoSelectNoiseAction = QtGui.QAction('&Auto select noise', win)
 autoSelectNoiseAction.setShortcut('Ctrl+A')
 autoSelectNoiseAction.setStatusTip('Automatically select a noise type with the selected files')
 autoSelectNoiseAction.triggered.connect(lambda: wFile.autoSelectNoise())
 
-switchNoiseTypeAction = QtGui.QAction('&Switch Noise type', win)
+switchNoiseTypeAction = QtGui.QAction('&Switch Noise Type', win)
 switchNoiseTypeAction.setShortcut('Ctrl+E')
 switchNoiseTypeAction.setStatusTip('Switch abscissa between Eb/N0, Es/N0, MI, ROP, EP...')
 switchNoiseTypeAction.triggered.connect(lambda: wFile.switchNoiseType())
 
-switchNoiseTypeRevertAction = QtGui.QAction('&Switch Noise type (revert order)', win)
+switchNoiseTypeRevertAction = QtGui.QAction('&Switch Noise Type (revert order)', win)
 switchNoiseTypeRevertAction.setShortcut('Ctrl+Shift+E')
 switchNoiseTypeRevertAction.setStatusTip('Switch abscissa between EP, ROP, MI, Es/N0, Eb/N0...')
 switchNoiseTypeRevertAction.triggered.connect(lambda: wFile.switchNoiseTypeRevert())
 
-switchFileFilterAction = QtGui.QAction('&Activate/Deactivate File Filter', win)
-switchFileFilterAction.setStatusTip('Activate or Deactivate the File Filter (*.perf, *.dat, *.txt, *.data)')
+switchFileFilterAction = QtGui.QAction('&Enable/Disable File Filter', win)
+switchFileFilterAction.setShortcut('Ctrl+F')
+switchFileFilterAction.setStatusTip('Enable or disable the file filter (*.perf, *.dat, *.txt, *.data)')
 switchFileFilterAction.triggered.connect(lambda: wFile.switchFileFilter())
 
 refreshAction = QtGui.QAction('&Refresh', win)
@@ -128,10 +134,11 @@ refreshAction.setShortcut('F5')
 refreshAction.setStatusTip('Refresh the displayed curves')
 refreshAction.triggered.connect(lambda: wFile.refresh())
 
-# win.statusBar()
+win.statusBar()
 
 menubar = win.menuBar()
 fileMenu = menubar.addMenu('&File')
+fileMenu.addAction(selectFolderAction)
 fileMenu.addAction(exitAction)
 optionMenu = menubar.addMenu('&Display')
 optionMenu.addAction(refreshAction)
