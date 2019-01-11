@@ -406,7 +406,6 @@ def createFileSystemModel(dirPath):
 	model.setReadOnly(True)
 	model.setRootPath(dirPath)
 	model.setFilter(QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs | QtCore.QDir.AllEntries | QtCore.QDir.Files)
-	# model.setFilter(proxy)
 	model.setNameFilters(['*.perf', '*.dat', '*.txt', '*.data'])
 	model.setNameFilterDisables(False)
 
