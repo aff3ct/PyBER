@@ -390,17 +390,6 @@ class AdvTreeView(QtGui.QTreeView):
 			self.setRootIndex(model.index(dirPath, 0))
 			del oldModel
 
-class AdvProxyModel(QtCore.QSortFilterProxyModel):
-
-	def __init__(self, parent):
-		super().__init__(parent)
-
-	def filterAcceptsRow(self, source_row, source_parent):
-		super().filterAcceptsRow(source_row, source_parent)
-		print(source_row)
-		print(source_parent)
-
-
 def createFileSystemModel(dirPath):
 	model = QtGui.QFileSystemModel()
 	model.setReadOnly(True)
