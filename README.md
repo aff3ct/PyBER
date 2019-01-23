@@ -13,6 +13,6 @@ This project use python 3.x and some dependencies : PyQt 4.7+ or PyQt5, NumPy.
 
 ### Launch PyBER
 
-	python3 pyBER.py
+	python3 PyBER.py
 
 By default the displayed files are the one contained in the `./data/` folder.
