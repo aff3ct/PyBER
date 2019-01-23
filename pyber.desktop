@@ -4,10 +4,10 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=PyBER Plotter
-# Firt arg is the location of the PyBER python script, second arg is the location of 
-# the data to browse in PyBER (if nothing is specified, PyBER will try to open the 
+# Firt arg is the location of the PyBER python script, second arg is the location of
+# the data to browse in PyBER (if nothing is specified, PyBER will try to open the
 # "data/" folder).
-Exec=[full_path_to_PyBER]/pyBER.py [full_path_to_PyBER]/data/
+Exec=[full_path_to_PyBER]/PyBER.py [full_path_to_PyBER]/data/
 Icon=[full_path_to_PyBER]/img/woody.png
 Type=Application
 Categories=Development;
