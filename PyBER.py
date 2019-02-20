@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import PyQt5
 import lib.pyqtgraph.pyqtgraph.console
 import lib.pyqtgraph.pyqtgraph as pg
 from lib.pyqtgraph.pyqtgraph.Qt import QtCore, QtGui
